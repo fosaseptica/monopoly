@@ -1,66 +1,87 @@
 package monopoly;
 
-import partida.*;
 import java.util.ArrayList;
+import partida.*;
 
-
+// Clase Grupo
+/*
+Objetivo:
+Representa un conjunto de casillas solares que comparten el mismo color. 
+Sirve para determinar si un jugador posee todas las propiedades de un color,
+lo cual afecta a alquileres y la posibilidad de construir edificios.
+*/
 class Grupo {
 
-    //Atributos
-    private ArrayList<Casilla> miembros; //Casillas miembros del grupo.
-    private String colorGrupo; //Color del grupo
-    private int numCasillas; //Número de casillas del grupo.
+    // Atributos
+    private ArrayList<Casilla> miembros; // Lista que contiene todas las casillas que forman parte del grupo
+    private String colorGrupo; // Color que identifica el grupo (por ejemplo, rojo, azul)
+    private int numCasillas; // Número total de casillas que hay en el grupo
 
-    //Constructor vacío.
+    // Constructor vacío
     public Grupo() {
+        // Inicializa la lista de miembros vacía
         miembros = new ArrayList<>();
+        // Inicializa el color como cadena vacía
         colorGrupo = "";
+        // Inicializa el número de casillas a 0
         numCasillas = 0;
     }
 
-    /*Constructor para cuando el grupo está formado por DOS CASILLAS:
-    * Requiere como parámetros las dos casillas miembro y el color del grupo.
-     */
+    /* Constructor para grupos de DOS CASILLAS
+    * Parámetros:
+    *   cas1, cas2: las casillas que forman parte del grupo
+    *   colorGrupo: el color del grupo
+    */
     public Grupo(Casilla cas1, Casilla cas2, String colorGrupo) {
-        miembros = new ArrayList<>();
-        miembros.add(cas1);
-        miembros.add(cas2);
-        this.colorGrupo = colorGrupo;
-        numCasillas = 2;
+        miembros = new ArrayList<>(); // Crea la lista de miembros
+        miembros.add(cas1);           // Añade la primera casilla
+        miembros.add(cas2);           // Añade la segunda casilla
+        this.colorGrupo = colorGrupo; // Asigna el color del grupo
+        numCasillas = 2;              // Indica que el grupo tiene 2 casillas
     }
 
-    /*Constructor para cuando el grupo está formado por TRES CASILLAS:
-    * Requiere como parámetros las tres casillas miembro y el color del grupo.
-     */
+    /* Constructor para grupos de TRES CASILLAS
+    * Parámetros:
+    *   cas1, cas2, cas3: las casillas que forman parte del grupo
+    *   colorGrupo: el color del grupo
+    */
     public Grupo(Casilla cas1, Casilla cas2, Casilla cas3, String colorGrupo) {
-        miembros = new ArrayList<>();
-        miembros.add(cas1);
-        miembros.add(cas2);
-        miembros.add(cas3);
-        this.colorGrupo = colorGrupo;
-        numCasillas = 3;
+        miembros = new ArrayList<>(); // Crea la lista de miembros
+        miembros.add(cas1);           // Añade la primera casilla
+        miembros.add(cas2);           // Añade la segunda casilla
+        miembros.add(cas3);           // Añade la tercera casilla
+        this.colorGrupo = colorGrupo; // Asigna el color del grupo
+        numCasillas = 3;              // Indica que el grupo tiene 3 casillas
     }
 
-    /* Método que añade una casilla al array de casillas miembro de un grupo.
-    * Parámetro: casilla que se quiere añadir.
-     */
+    /* Método para añadir una casilla al grupo
+    * Parámetro:
+    *   miembro: la casilla que se quiere añadir al grupo
+    */
     public void anhadirCasilla(Casilla miembro) {
-        miembros.add(miembro);
-        numCasillas++;
+        miembros.add(miembro); // Añade la casilla a la lista
+        numCasillas++;         // Incrementa el contador de casillas del grupo
     }
 
-    /*Método que comprueba si el jugador pasado tiene en su haber todas las casillas del grupo:
-    * Parámetro: jugador que se quiere evaluar.
-    * Valor devuelto: true si es dueño de todas las casillas del grupo, false en otro caso.
-     */
+    /* Método que comprueba si un jugador es dueño de todas las casillas del grupo
+    * Parámetro:
+    *   jugador: jugador que queremos evaluar
+    * Retorno:
+    *   true si el jugador posee todas las casillas del grupo, false si falta alguna
+    */
     public boolean esDuenhoGrupo(Jugador jugador) {
+        // Recorre todas las casillas del grupo
         for(Casilla c : miembros) {
+            // Si alguna casilla no pertenece al jugador, devuelve false
             if(c.getDuenho() != jugador) {
-                return false;//alguna casilla no es del jugador
+                return false;
             }
         }
-    return true;// todas las casillas son del jugador
+        // Si todas las casillas pertenecen al jugador, devuelve true
+        return true;
     }
+
+}
 
     /*necesario esto en casilla
     // Getter para obtener el dueño de la casilla
@@ -69,5 +90,5 @@ class Grupo {
     }
     */
 
-}
+
 
