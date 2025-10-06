@@ -9,173 +9,130 @@ public class MonopolyETSE {
     
 }
 */
-
 package monopoly;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class MonopolyETSE {
 
-    // Clase interna Banca
-    public static class Banca {
-        // Puedes añadir atributos y métodos más adelante
-    }
+    // Jugador simple
+    static class Jugador {
+        String nombre;
+        String avatar;
+        int fortuna;
+        List<String> propiedades = new ArrayList<>();
+        List<String> hipotecas = new ArrayList<>();
+        List<String> edificios = new ArrayList<>();
 
-    // Clase interna Tablero mínima
-    public static class Tablero {
-        public void inicializarCasillas() {
-            // Inicializa las casillas (vacío por ahora)
-        }
-
-        public void colocarJugadorEnSalida(Jugador j) {
-            // Coloca al jugador en salida (vacío por ahora)
-        }
-
-        public void moverJugador(Jugador j, int avance) {
-            // Mueve al jugador (vacío por ahora)
-            System.out.println(j.getNombre() + " avanza " + avance + " casillas.");
-        }
-
-        public char generarAvatarAleatorio() {
-            return (char) ('A' + (int) (Math.random() * 26));
-        }
-    }
-
-    // Clase interna Jugador mínima
-    public static class Jugador {
-        private String nombre;
-        private String avatar;
-        private String tipoAvatar;
-        private int fortuna;
-
-        public Jugador(String nombre, String avatar, String tipoAvatar, int fortuna) {
+        Jugador(String nombre, String avatar) {
             this.nombre = nombre;
             this.avatar = avatar;
-            this.tipoAvatar = tipoAvatar;
-            this.fortuna = fortuna;
+            this.fortuna = 15000000;
         }
 
-        public String getNombre() { return nombre; }
-        public String getAvatar() { return avatar; }
-        public int getFortuna() { return fortuna; }
+        void mostrar() {
+            System.out.println("{");
+            System.out.println("nombre: " + nombre + ",");
+            System.out.println("avatar: " + avatar + ",");
+            System.out.println("fortuna: " + fortuna + ",");
+            System.out.println("propiedades: " + propiedades + ",");
+            System.out.println("hipotecas: " + (hipotecas.isEmpty() ? "-" : hipotecas) + ",");
+            System.out.println("edificios: " + edificios);
+            System.out.println("}");
+        }
 
-        public String descripcionCompleta() {
-            return "{nombre: " + nombre + ", avatar: " + avatar + ", tipo: " + tipoAvatar +
-                    ", fortuna: " + fortuna + "}";
+        void descripcionCompleta() {
+            System.out.println("{");
+            System.out.println("nombre: " + nombre + ",");
+            System.out.println("avatar: " + avatar + ",");
+            System.out.println("fortuna: " + fortuna + ",");
+            System.out.println("propiedades: " + propiedades + ",");
+            System.out.println("hipotecas: " + (hipotecas.isEmpty() ? "-" : hipotecas) + ",");
+            System.out.println("edificios: " + edificios);
+            System.out.println("}");
+        }
+    }
+
+    // Tablero simple
+    static class Tablero {
+        char generarAvatarAleatorio() {
+            return (char) ('A' + (int)(Math.random() * 26));
+        }
+
+        void moverJugador(Jugador j, int avance) {
+            System.out.println("{");
+            System.out.println("avatar: " + j.avatar + " avanza " + avance + " posiciones");
+            System.out.println("}");
         }
     }
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-
-        // Crear la banca
-        Banca banca = new Banca();
-
-        // Inicializar el tablero
         Tablero tablero = new Tablero();
-        tablero.inicializarCasillas();
-
-        // Lista de jugadores
         Jugador[] jugadores = new Jugador[4];
         int numJugadores = 0;
         Jugador jugadorActual = null;
 
-        System.out.println("=== MONOPOLY ETSE 2025-2026 ===");
-        System.out.println("Introduce comandos para jugar. Escribe 'salir' para terminar.");
+        System.out.println("=== MONOPOLY ETSE ===");
 
-        boolean continuar = true;
-
-        while (continuar) {
+        while (true) {
             System.out.print("$> ");
-            String comando = sc.nextLine().trim();
+            String cmd = sc.nextLine().trim();
 
-            if (comando.equalsIgnoreCase("salir")) {
-                continuar = false;
+            if (cmd.equalsIgnoreCase("salir")) break;
 
-            } else if (comando.startsWith("crear jugador")) {
-                String[] partes = comando.split(" ");
-                if (partes.length == 4 && numJugadores < 4) {
+            else if (cmd.startsWith("crear jugador")) {
+                if (numJugadores < 4) {
+                    String[] partes = cmd.split(" ");
                     String nombre = partes[2];
-                    String tipoAvatar = partes[3];
-                    char avatarChar = tablero.generarAvatarAleatorio();
-                    String avatar = String.valueOf(avatarChar);
-
-                    Jugador nuevo = new Jugador(nombre, avatar, tipoAvatar, 15000000);
+                    char avatar = tablero.generarAvatarAleatorio();
+                    Jugador nuevo = new Jugador(nombre, String.valueOf(avatar));
                     jugadores[numJugadores++] = nuevo;
-
                     if (numJugadores == 1) jugadorActual = nuevo;
+                    System.out.println("{");
+                    System.out.println("nombre: " + nombre + ",");
+                    System.out.println("avatar: " + avatar);
+                    System.out.println("}");
+                } else System.out.println("Máximo 4 jugadores.");
 
-                    tablero.colocarJugadorEnSalida(nuevo);
+            } else if (cmd.equalsIgnoreCase("listar jugadores")) {
+                for (int i = 0; i < numJugadores; i++) jugadores[i].mostrar();
 
-                    System.out.println("{nombre: " + nombre + ", avatar: " + avatar + "}");
-                } else {
-                    System.out.println("Error al crear jugador. Máximo 4 jugadores.");
-                }
-
-            } else if (comando.equalsIgnoreCase("jugador")) {
+            } else if (cmd.equalsIgnoreCase("jugador")) {
                 if (jugadorActual != null) {
-                    System.out.println("{nombre: " + jugadorActual.getNombre() +
-                            ", avatar: " + jugadorActual.getAvatar() + "}");
+                    System.out.println("{");
+                    System.out.println("nombre: " + jugadorActual.nombre + ",");
+                    System.out.println("avatar: " + jugadorActual.avatar);
+                    System.out.println("}");
                 }
 
-            } else if (comando.equalsIgnoreCase("listar jugadores")) {
-                for (int i = 0; i < numJugadores; i++) {
-                    Jugador j = jugadores[i];
-                    System.out.println("{nombre: " + j.getNombre() + ", avatar: " + j.getAvatar() +
-                            ", fortuna: " + j.getFortuna() + "}");
-                }
-
-            } else if (comando.startsWith("describir jugador")) {
-                String[] partes = comando.split(" ");
-                if (partes.length == 3) {
-                    String nombre = partes[2];
-                    for (int i = 0; i < numJugadores; i++) {
-                        if (jugadores[i].getNombre().equalsIgnoreCase(nombre)) {
-                            System.out.println(jugadores[i].descripcionCompleta());
-                        }
-                    }
-                }
-
-            } else if (comando.startsWith("lanzar dados")) {
-                int dado1, dado2, avance;
-                try {
-                    if (comando.contains("+")) {
-                        String valores = comando.substring(12).trim();
-                        String[] dados = valores.split("\\+");
-                        dado1 = Integer.parseInt(dados[0]);
-                        dado2 = Integer.parseInt(dados[1]);
-                    } else {
-                        dado1 = (int) (Math.random() * 6) + 1;
-                        dado2 = (int) (Math.random() * 6) + 1;
-                    }
-                    avance = dado1 + dado2;
-                    System.out.println("Dados: " + dado1 + " + " + dado2 + " = " + avance);
-                    tablero.moverJugador(jugadorActual, avance);
-                } catch (Exception e) {
-                    System.out.println("Formato de comando incorrecto. Ej: lanzar dados 2+4");
-                }
-
-            } else if (comando.equalsIgnoreCase("acabar turno")) {
-                if (numJugadores > 0) {
-                    int indexActual = 0;
-                    for (int i = 0; i < numJugadores; i++) {
-                        if (jugadores[i] == jugadorActual) {
-                            indexActual = i;
-                            break;
-                        }
-                    }
-                    jugadorActual = jugadores[(indexActual + 1) % numJugadores];
-                    System.out.println("El jugador actual es " + jugadorActual.getNombre() + ".");
-                }
-
-            } else {
-                System.out.println("Comando no reconocido.");
+            } else if (cmd.startsWith("lanzar dados")) {
+                int dado1 = (int)(Math.random() * 6) + 1;
+                int dado2 = (int)(Math.random() * 6) + 1;
+                int avance = dado1 + dado2;
+                System.out.println("{");
+                System.out.println("Dados: " + dado1 + " + " + dado2 + " = " + avance);
+                System.out.println("Jugador: " + jugadorActual.nombre);
+                System.out.println("Avatar: " + jugadorActual.avatar + " avanza " + avance + " posiciones");
+                System.out.println("}");
             }
+
+            else if (cmd.equalsIgnoreCase("acabar turno")) {
+                if (numJugadores > 0) {
+                    int index = 0;
+                    for (int i = 0; i < numJugadores; i++) if (jugadores[i] == jugadorActual) index = i;
+                    jugadorActual = jugadores[(index + 1) % numJugadores];
+                    System.out.println("{");
+                    System.out.println("El jugador actual es " + jugadorActual.nombre + ".");
+                    System.out.println("}");
+                }
+
+            } else System.out.println("Comando no reconocido.");
         }
 
-        System.out.println("Gracias por jugar a Monopoly ETSE.");
+        System.out.println("¡Gracias por jugar!");
         sc.close();
     }
 }
-
-
