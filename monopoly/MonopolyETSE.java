@@ -81,7 +81,7 @@ public class MonopolyETSE {
     }
 
     // =========================
-    // Método principal
+    // Main
     // =========================
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);      // Para leer comandos del usuario
