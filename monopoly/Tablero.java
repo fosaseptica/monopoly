@@ -33,69 +33,67 @@ public class Tablero {
     }
     
     //Método para insertar las casillas del lado norte.
-    private void insertarLadoNorte() {
-        ArrayList<Casilla> ladoNorte = posiciones.get(2);
+    private void insertarLadoSur() {
+        ArrayList<Casilla> sur = posiciones.get(2);
         
-        sur.add(new CasillaEspecial("Salida"));
-        sur.add(new CasillaSolar("Solar1","Marron",600000,300000,500000,500000,100000,200000,20000,400000,2500000,500000,500000));
-        sur.add(new CasillaSolar("Solar2","Marron",600000,300000,500000,500000,100000,200000,40000,800000,4500000,900000,900000));
-        sur.add(new CasillaCaja("Caja"));
-        sur.add(new CasillaSolar("Solar3","Celeste",1000000,500000,500000,500000,100000,200000,60000,1000000,5500000,1100000,1100000));
-        sur.add(new CasillaTransporte("Trans1",500000,250000));
-        sur.add(new CasillaImpuesto("Imp1",2000000));
-        sur.add(new CasillaSolar("Solar4","Celeste",1000000,500000,500000,500000,100000,200000,60000,1000000,5500000,1100000,1100000));
-        sur.add(new CasillaSuerte("Suerte"));
-        sur.add(new CasillaSolar("Solar5","Celeste",1200000,600000,500000,500000,100000,200000,80000,1250000,6000000,1200000,1200000));
-        sur.add(new CasillaEspecial("Cárcel"));
-
+        sur.add(new Casilla("Salida", "Especial", 1, 0, banca));
+        sur.add(new Casilla("Solar1", "Solar", 2, 600000, banca));
+        sur.add(new Casilla("Solar2", "Solar", 3, 600000, banca));
+        sur.add(new Casilla("Caja", "Comunidad", 4, banca));
+        sur.add(new Casilla("Solar3", "Solar", 5, 1000000, banca));
+        sur.add(new Casilla("Trans1", "Transporte", 6, 500000, banca));
+        sur.add(new Casilla("Imp1", "Impuesto", 7, 2000000, banca));
+        sur.add(new Casilla("Solar4", "Solar", 8, 1000000, banca));
+        sur.add(new Casilla("Suerte", "Suerte", 9, banca));
+        sur.add(new Casilla("Solar5", "Solar", 10, 1200000, banca));
+        sur.add(new Casilla("Cárcel", "Especial", 11, banca));
     }
 
     //Método para insertar las casillas del lado sur.
-    private void insertarLadoSur() {
+    private void insertarLadoOeste() {
     ArrayList<Casilla> oeste = posiciones.get(1);
 
-        oeste.add(new CasillaSolar("Solar6","Rosa",1400000,700000,1000000,1000000,200000,400000,100000,1500000,7500000,1500000,1500000));
-        oeste.add(new CasillaServicio("Serv1",500000,50000));
-        oeste.add(new CasillaSolar("Solar7","Rosa",1400000,700000,1000000,1000000,200000,400000,100000,1500000,7500000,1500000,1500000));
-        oeste.add(new CasillaSuerte("Suerte"));
-        oeste.add(new CasillaSolar("Solar8","Rosa",1600000,800000,1000000,1000000,200000,400000,120000,1750000,9000000,1800000,1800000));
-        oeste.add(new CasillaTransporte("Trans2",500000,250000));
-        oeste.add(new CasillaSolar("Solar9","Naranja",1800000,900000,1000000,1000000,200000,400000,140000,1850000,9500000,1900000,1900000));
-        oeste.add(new CasillaCaja("Caja &H"));
-        oeste.add(new CasillaSolar("Solar10","Naranja",1800000,900000,1000000,1000000,200000,400000,140000,1850000,9500000,1900000,1900000));
-        oeste.add(new CasillaTransporte("Trans3",500000,250000));
-
+        oeste.add(new Casilla("Solar6", "Solar", 12, 1400000, banca));
+        oeste.add(new Casilla("Serv1", "Servicio", 13, 500000, banca));
+        oeste.add(new Casilla("Solar7", "Solar", 14, 1400000, banca));
+        oeste.add(new Casilla("Suerte", "Suerte", 15, banca));
+        oeste.add(new Casilla("Solar8", "Solar", 16, 1600000, banca));
+        oeste.add(new Casilla("Trans2", "Transporte", 17, 500000, banca));
+        oeste.add(new Casilla("Solar9", "Solar", 18, 1800000, banca));
+        oeste.add(new Casilla("Caja &H", "Comunidad", 19, banca));
+        oeste.add(new Casilla("Solar10", "Solar", 20, 1800000, banca));
+        oeste.add(new Casilla("Trans3", "Transporte", 21, 500000, banca));
     }
 
     //Método que inserta casillas del lado oeste.
-    private void insertarLadoOeste() {
+    private void insertarLadoNorte() {
     ArrayList<Casilla> norte = posiciones.get(2);
 
-        norte.add(new CasillaSolar("Solar11","Rojo",2200000,1000000,1000000,1000000,200000,400000,160000,2000000,10000000,2000000,2000000));
-        norte.add(new CasillaSolar("Solar12","Rojo",2200000,1100000,1500000,1500000,300000,600000,180000,2200000,10500000,2100000,2100000));
-        norte.add(new CasillaSuerte("Suerte"));
-        norte.add(new CasillaSolar("Solar13","Rojo",2200000,1100000,1500000,1500000,300000,600000,180000,2200000,10500000,2100000,2100000));
-        norte.add(new CasillaSolar("Solar14","Amarillo",2400000,1200000,1500000,1500000,300000,600000,200000,2325000,11000000,2200000,2200000));
-        norte.add(new CasillaTransporte("Trans4",500000,250000));
-        norte.add(new CasillaSolar("Solar15","Amarillo",2600000,1300000,1500000,1500000,300000,600000,220000,2450000,11500000,2300000,2300000));
-        norte.add(new CasillaCaja("Caja &J"));
-        norte.add(new CasillaSolar("Solar16","Amarillo",2600000,1300000,1500000,1500000,300000,600000,220000,2450000,11500000,2300000,2300000));
-        norte.add(new CasillaSuerte("Suerte"));
-        norte.add(new CasillaSolar("Solar17","Verde",2800000,1400000,1500000,1500000,300000,600000,240000,2600000,12000000,2400000,2400000));
+        norte.add(new Casilla("Solar11", "Solar", 22, 2200000, banca));
+        norte.add(new Casilla("Solar12", "Solar", 23, 2200000, banca));
+        norte.add(new Casilla("Suerte", "Suerte", 24, banca));
+        norte.add(new Casilla("Solar13", "Solar", 25, 2200000, banca));
+        norte.add(new Casilla("Solar14", "Solar", 26, 2400000, banca));
+        norte.add(new Casilla("Trans4", "Transporte", 27, 500000, banca));
+        norte.add(new Casilla("Solar15", "Solar", 28, 2600000, banca));
+        norte.add(new Casilla("Caja &J", "Comunidad", 29, banca));
+        norte.add(new Casilla("Solar16", "Solar", 30, 2600000, banca));
+        norte.add(new Casilla("Suerte", "Suerte", 31, banca));
+        norte.add(new Casilla("Solar17", "Solar", 32, 2800000, banca));
     }
 
     //Método que inserta las casillas del lado este.
     private void insertarLadoEste() {
     ArrayList<Casilla> este = posiciones.get(3);
 
-        este.add(new CasillaSolar("Solar18","Verde",3000000,1500000,2000000,2000000,400000,800000,260000,2750000,12750000,2550000,2550000));
-        este.add(new CasillaSolar("Solar19","Verde",3000000,1500000,2000000,2000000,400000,800000,260000,2750000,12750000,2550000,2550000));
-        este.add(new CasillaImpuesto("Imp2",2000000));
-        este.add(new CasillaSolar("Solar20","Azul",3200000,1600000,2000000,2000000,400000,800000,280000,3000000,14000000,2800000,2800000));
-        este.add(new CasillaSolar("Solar21","Azul",3500000,1750000,2000000,2000000,400000,800000,350000,3250000,17000000,3400000,3400000));
-        este.add(new CasillaSolar("Solar22","Azul",4000000,2000000,2000000,2000000,400000,800000,500000,4250000,20000000,4000000,4000000));
-        este.add(new CasillaEspecial("Parking"));
-        este.add(new CasillaEspecial("IrACárcel"));
+       este.add(new Casilla("Solar18", "Solar", 33, 3000000, banca));
+        este.add(new Casilla("Solar19", "Solar", 34, 3000000, banca));
+        este.add(new Casilla("Imp2", "Impuesto", 35, 2000000, banca));
+        este.add(new Casilla("Solar20", "Solar", 36, 3200000, banca));
+        este.add(new Casilla("Solar21", "Solar", 37, 3500000, banca));
+        este.add(new Casilla("Solar22", "Solar", 38, 4000000, banca));
+        este.add(new Casilla("Parking", "Especial", 39, banca));
+        este.add(new Casilla("IrACárcel", "Especial", 40, banca));
     }
 
     //Para imprimir el tablero, modificamos el método toString().
