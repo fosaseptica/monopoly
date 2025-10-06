@@ -19,6 +19,11 @@ public class Jugador {
 
     //Constructor vacío. Se usará para crear la banca.
     public Jugador() {
+        this.fortuna = Float.MAX_VALUE; // banca ilimitada
+        this.propiedades = new ArrayList<>();
+        this.enCarcel = false;
+        this.tiradasCarcel = 0;
+        this.vueltas = 0;
     }
 
     /*Constructor principal. Requiere parámetros:
@@ -27,58 +32,121 @@ public class Jugador {
     * que dos avatares tengan mismo ID). Desde este constructor también se crea el avatar.
      */
     public Jugador(String nombre, String tipoAvatar, Casilla inicio, ArrayList<Avatar> avCreados) {
-    
-        this.nombre = nombre; //Asignamos un nombre al jugador
-        this.fortuna = 15000000; //Asignamos la fortuna inicial (15.000.000)
-        this.gastos = 0; //Inicialmente no tiene gastos 
-        this.enCarcel = false; //Inicialmente no está en la carcel
-        this.tiradasCarcel = 0; //Inicialmente no ha tirado para salir de la carcel
-        this.vueltas = 0; //Inicialmente no ha dado ninguna vuelta al tablero
-        this.propiedades = new ArrayList<Casilla>(); //Inicialmente no tiene propiedades
-        this.avatar = new Avatar(tipoAvatar, avCreados); //Creamos el avatar del jugador
-        this.avatar.setCasilla(inicio); //Colocamos el avatar en la casilla de inicio
+        this.nombre = nombre;
+        this.fortuna = 15000000; // fortuna inicial
+        this.gastos = 0;
+        this.enCarcel = false;
+        this.tiradasCarcel = 0;
+        this.vueltas = 0;
+        this.propiedades = new ArrayList<>();
+
+        // Crear avatar y situarlo en la casilla inicial
+        this.avatar = new Avatar(tipoAvatar, this, inicio, avCreados);
     }
 
     //Otros métodos:
     //Método para añadir una propiedad al jugador. Como parámetro, la casilla a añadir.
     public void anhadirPropiedad(Casilla casilla) {
-        this.propiedades.add(casilla); //Añadimos la casilla al arraylist de propiedades del jugador.
+        if (!propiedades.contains(casilla)) {
+            propiedades.add(casilla);
+        }
     }
 
     //Método para eliminar una propiedad del arraylist de propiedades de jugador.
     public void eliminarPropiedad(Casilla casilla) {
-        this.propiedades.remove(casilla); //Eliminamos la casilla del arraylist de propiedades del jugador.
+        propiedades.remove(casilla);
     }
 
     //Método para añadir fortuna a un jugador
     //Como parámetro se pide el valor a añadir. Si hay que restar fortuna, se pasaría un valor negativo.
     public void sumarFortuna(float valor) {
-        this.fortuna += valor; //Sumamos el valor a la fortuna del jugador.
+        this.fortuna += valor;
+        if (valor < 0) {
+            sumarGastos(-valor);
+        }
     }
 
     //Método para sumar gastos a un jugador.
     //Parámetro: valor a añadir a los gastos del jugador (será el precio de un solar, impuestos pagados...).
     public void sumarGastos(float valor) {
-        this.gastos += valor; //Sumamos el valor a los gastos del jugador.
+        this.gastos += valor;
     }
 
     /*Método para establecer al jugador en la cárcel. 
     * Se requiere disponer de las casillas del tablero para ello (por eso se pasan como parámetro).*/
-    public void encarcelar(ArrayList<ArrayList<Casilla>> tablero) {
-    this.enCarcel = true;       // Marcamos que está en la cárcel
-    this.tiradasCarcel = 0;     // Reiniciamos el contador de tiradas
-    // Colocamos el avatar en la casilla de cárcel (suponiendo que tablero[5][0] es la cárcel, por ejemplo)
-    Casilla carcel = null;
-    for (ArrayList<Casilla> fila : tablero) {
-        for (Casilla c : fila) {
-            if (c.getTipo().equals("Cárcel")) {
-                carcel = c;
-                break;
+    public void encarcelar(ArrayList<ArrayList<Casilla>> pos) {
+        this.enCarcel = true;
+        this.tiradasCarcel = 0;
+
+        // Buscar casilla de cárcel en el tablero
+        for (ArrayList<Casilla> lado : pos) {
+            for (Casilla c : lado) {
+                if (c.getTipo().equalsIgnoreCase("Cárcel")) {
+                    // Mover avatar a la casilla de cárcel
+                    avatar.getLugar().eliminarAvatar(avatar);
+                    avatar.setLugar(c);
+                    c.anhadirAvatar(avatar);
+                    return;
+                }
             }
         }
-        if (carcel != null) break;
     }
-    if (carcel != null) {
-        this.avatar.setCasilla(carcel);
+    public boolean pagar(float cantidad, Jugador receptor) {
+        if (this.fortuna >= cantidad) {
+            this.fortuna -= cantidad;          // Restar dinero al jugador
+            this.sumarGastos(cantidad);        // Registrar gasto
+            receptor.sumarFortuna(cantidad);   // Sumar dinero al receptor
+            return true;                        // Pago exitoso
+        } else {
+            // No tiene suficiente dinero → bancarrota
+            return false;
+        }
     }
+
+    //Getters y Setters
+    public String getNombre() {
+        return nombre;
+    }
+
+    public Avatar getAvatar() {
+        return avatar;
+    }
+
+    public float getFortuna() {
+        return fortuna;
+    }
+
+    public float getGastos() {
+        return gastos;
+    }
+
+    public boolean isEnCarcel() {
+        return enCarcel;
+    }
+
+    public int getTiradasCarcel() {
+        return tiradasCarcel;
+    }
+
+    public void setTiradasCarcel(int tiradas) {
+        this.tiradasCarcel = tiradas;
+    }
+
+    public int getVueltas() {
+        return vueltas;
+    }
+
+    public void incrementarVueltas() {
+        this.vueltas++;
+    }
+
+    public ArrayList<Casilla> getPropiedades() {
+        return propiedades;
+    }
+
+    @Override
+    public String toString() {
+        return "Jugador: " + nombre + ", Fortuna: " + fortuna + ", Avatar: " + avatar.getId();
+    }
+
 }
