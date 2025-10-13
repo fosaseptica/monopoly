@@ -12,11 +12,11 @@ public class Menu {
     private int turno = 0; //Índice correspondiente al jugador que tiene el turno
     private int lanzamientos; //Número de lanzamientos en el turno actual
     private Tablero tablero; //Tablero del juego
-    private Dado dado1; 
+    private Dado dado1;
     private Dado dado2;
     private Jugador banca; //Jugador especial banca
-    private boolean tirado; 
-    private boolean solvente; 
+    private boolean tirado;
+    private boolean solvente;
     private Scanner sc; //Para leer comandos de consola
 
     //Constructor: inicia el juego y el bucle de comandos
@@ -25,13 +25,12 @@ public class Menu {
         avatares = new ArrayList<>();
         dado1 = new Dado();
         dado2 = new Dado();
-        banca = new Jugador(); // la banca
+        banca = new Jugador();
         tablero = new Tablero(banca);
         lanzamientos = 0;
         tirado = false;
         solvente = true;
         sc = new Scanner(System.in);
-
         System.out.println("=== MONOPOLY ETSE ===");
         iniciarPartida();
     }
@@ -49,9 +48,11 @@ public class Menu {
         }
     }
 
-    /*Método que interpreta el comando introducido y toma la acción correspondiente.*/
+    /* Interpreta el comando introducido y toma la acción correspondiente */
     private void analizarComando(String comando) {
         String[] partes = comando.split(" ");
+        if (partes.length == 0) return;
+
         switch (partes[0].toLowerCase()) {
             case "crear":
                 if (partes.length >= 4 && partes[1].equalsIgnoreCase("jugador"))
@@ -62,8 +63,12 @@ public class Menu {
             case "listar":
                 if (partes.length >= 2 && partes[1].equalsIgnoreCase("jugadores"))
                     listarJugadores();
+                else if (partes.length >= 2 && partes[1].equalsIgnoreCase("avatares"))
+                    listarAvatares();
+                else if (partes.length >= 2 && partes[1].equalsIgnoreCase("enventa"))
+                    listarVenta();
                 else
-                    System.out.println("Uso: listar jugadores");
+                    System.out.println("Uso: listar jugadores | listar avatares | listar enventa");
                 break;
             case "jugador":
                 mostrarTurnoActual();
@@ -77,6 +82,28 @@ public class Menu {
                 else
                     System.out.println("Uso: acabar turno");
                 break;
+            case "describir":
+                if (partes.length >= 3 && partes[1].equalsIgnoreCase("jugador"))
+                    descJugador(partes);
+                else if (partes.length >= 3 && partes[1].equalsIgnoreCase("avatar"))
+                    descAvatar(partes[2]);
+                else if (partes.length >= 2)
+                    descCasilla(partes[1]);
+                else
+                    System.out.println("Uso: describir jugador <nombre> | describir avatar <id> | describir <casilla>");
+                break;
+            case "comprar":
+                if (partes.length >= 2)
+                    comprar(partes[1]);
+                else
+                    System.out.println("Uso: comprar <nombre_casilla>");
+                break;
+            case "salir":
+                if (partes.length >= 2 && partes[1].equalsIgnoreCase("carcel"))
+                    salirCarcel();
+                else
+                    System.out.println("Uso: salir carcel");
+                break;
             default:
                 System.out.println("Comando no reconocido");
         }
@@ -88,14 +115,11 @@ public class Menu {
             System.out.println("Máximo 4 jugadores.");
             return;
         }
-
         // Casilla de inicio (Salida)
         Casilla salida = tablero.getCasillas().get(0).get(0);
-
         // Crear jugador con el tipo de avatar y colocarlo en la salida
         Jugador nuevo = new Jugador(nombre, tipoAvatar, salida, avatares);
         jugadores.add(nuevo);
-
         System.out.println("{");
         System.out.println("nombre: " + nombre + ",");
         System.out.println("avatar: " + nuevo.getAvatar().getId());
@@ -121,28 +145,21 @@ public class Menu {
             System.out.println("No hay jugadores en la partida.");
             return;
         }
-
         Jugador actual = jugadores.get(turno);
         int tirada1 = dado1.hacerTirada();
         int tirada2 = dado2.hacerTirada();
         int total = tirada1 + tirada2;
-
         System.out.println("{");
         System.out.println("Dados: " + tirada1 + " + " + tirada2 + " = " + total);
         System.out.println("Jugador: " + actual.getNombre());
         System.out.println("Avatar: " + actual.getAvatar().getId() + " avanza " + total + " posiciones");
         System.out.println("}");
-
         // Mover avatar por el tablero
         actual.getAvatar().moverAvatar(tablero.getCasillas(), total);
         Casilla nueva = actual.getAvatar().getLugar();
-
         System.out.println("Ahora estás en: " + nueva.getNombre());
         solvente = nueva.evaluarCasilla(actual, banca, total);
-
-        if (!solvente)
-            System.out.println("No puedes pagar, bancarrota!");
-
+        if (!solvente) System.out.println("No puedes pagar, bancarrota!");
         tirado = true;
     }
 
@@ -152,7 +169,6 @@ public class Menu {
             System.out.println("No hay jugadores todavía.");
             return;
         }
-
         for (Jugador j : jugadores) {
             System.out.println("{");
             System.out.println("nombre: " + j.getNombre() + ",");
@@ -163,18 +179,104 @@ public class Menu {
         }
     }
 
+    /*Lista todos los avatares creados.*/
+    private void listarAvatares() {
+        if (avatares.isEmpty()) {
+            System.out.println("No hay avatares creados.");
+            return;
+        }
+        for (Avatar a : avatares) {
+            System.out.println("{ id: " + a.getId() + ", tipo: " + a.getTipo() + 
+                    ", jugador: " + a.getJugador().getNombre() + " }");
+        }
+    }
+
+    /*Lista todas las casillas en venta.*/
+    private void listarVenta() {
+        for (ArrayList<Casilla> lado : tablero.getCasillas()) {
+            for (Casilla c : lado) {
+                if (c.getDuenho() == banca) {
+                    System.out.println(c.casEnVenta());
+                }
+            }
+        }
+    }
+
     /*Pasa el turno al siguiente jugador.*/
     private void acabarTurno() {
         if (jugadores.isEmpty()) {
             System.out.println("No hay jugadores.");
             return;
         }
-
         turno = (turno + 1) % jugadores.size();
         tirado = false;
         Jugador siguiente = jugadores.get(turno);
         System.out.println("{");
         System.out.println("El jugador actual es " + siguiente.getNombre() + ".");
         System.out.println("}");
+    }
+
+    /*Muestra la información de un jugador.*/
+    private void descJugador(String[] partes) {
+        if (partes.length < 3) {
+            System.out.println("Uso: describir jugador <nombre>");
+            return;
+        }
+        String nombre = partes[2];
+        for (Jugador j : jugadores) {
+            if (j.getNombre().equalsIgnoreCase(nombre)) {
+                System.out.println(j);
+                return;
+            }
+        }
+        System.out.println("Jugador no encontrado.");
+    }
+
+    /*Muestra la información de un avatar.*/
+    private void descAvatar(String ID) {
+        for (Avatar a : avatares) {
+            if (a.getId().equalsIgnoreCase(ID)) {
+                System.out.println(a + " del jugador " + a.getJugador().getNombre() +
+                        " en " + a.getLugar().getNombre());
+                return;
+            }
+        }
+        System.out.println("Avatar no encontrado.");
+    }
+
+    /*Muestra la información de una casilla.*/
+    private void descCasilla(String nombre) {
+        Casilla c = tablero.encontrar_casilla(nombre);
+        if (c != null)
+            System.out.println(c.infoCasilla());
+        else
+            System.out.println("Casilla no encontrada.");
+    }
+
+    /*Permite comprar una casilla si está en venta.*/
+    private void comprar(String nombre) {
+        Jugador actual = jugadores.get(turno);
+        Casilla c = tablero.encontrar_casilla(nombre);
+        if (c != null && c.getDuenho() == banca) {
+            c.comprarCasilla(actual, banca);
+            System.out.println("Has comprado: " + c.getNombre());
+        } else {
+            System.out.println("Casilla no encontrada o ya comprada");
+        }
+    }
+
+    /*Permite salir de la cárcel pagando.*/
+    private void salirCarcel() {
+        Jugador actual = jugadores.get(turno);
+        if (actual.isEnCarcel()) {
+            actual.sumarFortuna(-500000); // paga 500.000€
+            actual.setTiradasCarcel(0);
+            // Buscar casilla de salida
+            Casilla salida = tablero.getCasillas().get(0).get(0);
+            actual.getAvatar().setLugar(salida);
+            System.out.println("Has salido de la cárcel.");
+        } else {
+            System.out.println("No estás en la cárcel.");
+        }
     }
 }
