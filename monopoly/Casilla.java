@@ -9,12 +9,16 @@ public class Casilla {
     //Atributos:
     private String nombre; //Nombre de la casilla
     private String tipo; //Tipo de casilla (Solar, Especial, Transporte, Servicios, Comunidad, Suerte y Impuesto).
-    private float valor; //Valor de esa casilla (en la mayoría será valor de compra, en la casilla parking se usará como el bote).
+    private float valor; //Valor de esa casilla (precio de compra para solares).
     private int posicion; //Posición que ocupa la casilla en el tablero (entero entre 1 y 40).
     private Jugador duenho; //Dueño de la casilla (por defecto sería la banca).
     private Grupo grupo; //Grupo al que pertenece la casilla (si es solar).
     private float impuesto; //Cantidad a pagar por caer en la casilla: el alquiler en solares/servicios/transportes o impuestos.
     private float hipoteca; //Valor otorgado por hipotecar una casilla
+    private float precioCasa; //Precio para construir una casa
+    private float precioHotel; //Precio para construir un hotel
+    private float precioPiscina; //Precio para construir una piscina
+    private float precioPistaDeporte; //Precio para construir una pista de deporte
     private ArrayList<Avatar> avatares; //Avatares que están situados en la casilla.
 
     //Constructores:
@@ -22,8 +26,27 @@ public class Casilla {
         this.avatares = new ArrayList<>();
     }//Parámetros vacíos
 
-    /*Constructor para casillas tipo Solar, Servicios o Transporte:
-    * Parámetros: nombre casilla, tipo (debe ser solar, serv. o transporte), posición en el tablero, valor y dueño.
+    /*Constructor para casillas tipo Solar:
+    * Parámetros: nombre casilla, posición en el tablero, precio, hipoteca, precio casa,
+    * precio hotel, precio piscina, precio pista deporte y dueño.
+     */
+    public Casilla(String nombre, int posicion, float valor, float hipoteca, float precioCasa,
+                   float precioHotel, float precioPiscina, float precioPistaDeporte, Jugador duenho) {
+        this.nombre = nombre;
+        this.tipo = "Solar";
+        this.posicion = posicion;
+        this.valor = valor;
+        this.hipoteca = hipoteca;
+        this.precioCasa = precioCasa;
+        this.precioHotel = precioHotel;
+        this.precioPiscina = precioPiscina;
+        this.precioPistaDeporte = precioPistaDeporte;
+        this.duenho = duenho;
+        this.avatares = new ArrayList<>();
+    }
+
+    /*Constructor para casillas tipo Servicios o Transporte:
+    * Parámetros: nombre casilla, tipo (debe ser serv. o transporte), posición en el tablero, valor y dueño.
      */
     public Casilla(String nombre, String tipo, int posicion, float valor, Jugador duenho) {
         this.nombre = nombre;
@@ -118,8 +141,16 @@ public class Casilla {
         StringBuilder sb = new StringBuilder();
         sb.append("Casilla ").append(posicion).append(": ").append(nombre).append(" (").append(tipo).append(")\n");
         if (duenho != null) sb.append("Dueño: ").append(duenho.getNombre()).append("\n");
-        sb.append("Valor: ").append(valor).append("\n");
-        sb.append("Impuesto: ").append(impuesto).append("\n");
+        sb.append("Valor: ").append(valor).append("€\n");
+        if (tipo.equalsIgnoreCase("Solar")) {
+            sb.append("Hipoteca: ").append(hipoteca).append("€\n");
+            sb.append("Precio casa: ").append(precioCasa).append("€\n");
+            sb.append("Precio hotel: ").append(precioHotel).append("€\n");
+            sb.append("Precio piscina: ").append(precioPiscina).append("€\n");
+            sb.append("Precio pista deporte: ").append(precioPistaDeporte).append("€\n");
+        } else {
+            sb.append("Impuesto: ").append(impuesto).append("€\n");
+        }
         sb.append("Avatares: ");
         for (Avatar av : avatares) {
             sb.append(av.toString()).append(" ");
@@ -159,4 +190,24 @@ public class Casilla {
         return avatares;
     }
 
+    public float getPrecioCasa() {
+        return precioCasa;
+    }
+
+    public float getPrecioHotel() {
+        return precioHotel;
+    }
+
+    public float getPrecioPiscina() {
+        return precioPiscina;
+    }
+
+    public float getPrecioPistaDeporte() {
+        return precioPistaDeporte;
+    }
+
+    public float getHipoteca() {
+        return hipoteca;
+    }
 }
+
