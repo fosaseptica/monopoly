@@ -3,6 +3,8 @@ package monopoly;
 import partida.*;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.io.File;
+import java.io.FileNotFoundException;
 
 public class Menu {
 
@@ -74,7 +76,25 @@ public class Menu {
                 mostrarTurnoActual();
                 break;
             case "lanzar":
-                lanzarDados();
+                if (partes.length == 1) {
+                    lanzarDados();
+                } else if (partes.length == 3 && partes[1].equalsIgnoreCase("dados")) {
+                    // lanzar dados X+Y
+                    String[] nums = partes[2].split("\\+");
+                    if (nums.length == 2) {
+                        try {
+                            int d1 = Integer.parseInt(nums[0]);
+                            int d2 = Integer.parseInt(nums[1]);
+                            lanzarDadosForzados(d1, d2);
+                        } catch (NumberFormatException e) {
+                            System.out.println("Formato: lanzar dados X+Y");
+                        }
+                    } else {
+                        System.out.println("Formato: lanzar dados X+Y");
+                    }
+                } else {
+                    System.out.println("Uso: lanzar o lanzar dados X+Y");
+                }
                 break;
             case "acabar":
                 if (partes.length >= 2 && partes[1].equalsIgnoreCase("turno"))
@@ -104,6 +124,18 @@ public class Menu {
                 else
                     System.out.println("Uso: salir carcel");
                 break;
+            case "ver":
+                if (partes.length >= 2 && partes[1].equalsIgnoreCase("tablero"))
+                    verTablero();
+                else
+                    System.out.println("Uso: ver tablero");
+                break;
+            case "comandos":
+                if (partes.length >= 2)
+                    ejecutarComandosFichero(partes[1]);
+                else
+                    System.out.println("Uso: comandos <fichero>");
+                break;
             default:
                 System.out.println("Comando no reconocido");
         }
@@ -120,10 +152,12 @@ public class Menu {
         // Crear jugador con el tipo de avatar y colocarlo en la salida
         Jugador nuevo = new Jugador(nombre, tipoAvatar, salida, avatares);
         jugadores.add(nuevo);
+        avatares.add(nuevo.getAvatar());
         System.out.println("{");
         System.out.println("nombre: " + nombre + ",");
         System.out.println("avatar: " + nuevo.getAvatar().getId());
         System.out.println("}");
+        verTablero(); // Repinta el tablero tras crear jugador
     }
 
     /*Muestra el jugador que tiene el turno actual.*/
@@ -161,6 +195,29 @@ public class Menu {
         solvente = nueva.evaluarCasilla(actual, banca, total);
         if (!solvente) System.out.println("No puedes pagar, bancarrota!");
         tirado = true;
+        verTablero(); // Repinta el tablero tras mover
+    }
+
+    // Lanzar dados con valores forzados
+    private void lanzarDadosForzados(int d1, int d2) {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores en la partida.");
+            return;
+        }
+        Jugador actual = jugadores.get(turno);
+        int total = d1 + d2;
+        System.out.println("{");
+        System.out.println("Dados: " + d1 + " + " + d2 + " = " + total);
+        System.out.println("Jugador: " + actual.getNombre());
+        System.out.println("Avatar: " + actual.getAvatar().getId() + " avanza " + total + " posiciones");
+        System.out.println("}");
+        actual.getAvatar().moverAvatar(tablero.getCasillas(), total);
+        Casilla nueva = actual.getAvatar().getLugar();
+        System.out.println("Ahora estás en: " + nueva.getNombre());
+        solvente = nueva.evaluarCasilla(actual, banca, total);
+        if (!solvente) System.out.println("No puedes pagar, bancarrota!");
+        tirado = true;
+        verTablero(); // Repinta el tablero tras mover
     }
 
     /*Lista todos los jugadores con su información básica.*/
@@ -170,12 +227,7 @@ public class Menu {
             return;
         }
         for (Jugador j : jugadores) {
-            System.out.println("{");
-            System.out.println("nombre: " + j.getNombre() + ",");
-            System.out.println("avatar: " + j.getAvatar().getId() + ",");
-            System.out.println("fortuna: " + j.getFortuna() + ",");
-            System.out.println("propiedades: " + (j.getPropiedades().isEmpty() ? "[]" : j.getPropiedades()));
-            System.out.println("}");
+            System.out.println(j); // Asegúrate de que Jugador.toString() muestra todos los campos requeridos
         }
     }
 
@@ -186,8 +238,7 @@ public class Menu {
             return;
         }
         for (Avatar a : avatares) {
-            System.out.println("{ id: " + a.getId() + ", tipo: " + a.getTipo() + 
-                    ", jugador: " + a.getJugador().getNombre() + " }");
+            System.out.println(a); // Asegúrate de que Avatar.toString() muestra id, tipo y jugador
         }
     }
 
@@ -196,7 +247,7 @@ public class Menu {
         for (ArrayList<Casilla> lado : tablero.getCasillas()) {
             for (Casilla c : lado) {
                 if (c.getDuenho() == banca) {
-                    System.out.println(c.casEnVenta());
+                    System.out.println(c.casEnVenta()); // Asegúrate de que casEnVenta() muestra tipo, grupo, valor...
                 }
             }
         }
@@ -225,7 +276,7 @@ public class Menu {
         String nombre = partes[2];
         for (Jugador j : jugadores) {
             if (j.getNombre().equalsIgnoreCase(nombre)) {
-                System.out.println(j);
+                System.out.println(j); // Asegúrate de que Jugador.toString() muestra todos los campos requeridos
                 return;
             }
         }
@@ -236,8 +287,7 @@ public class Menu {
     private void descAvatar(String ID) {
         for (Avatar a : avatares) {
             if (a.getId().equalsIgnoreCase(ID)) {
-                System.out.println(a + " del jugador " + a.getJugador().getNombre() +
-                        " en " + a.getLugar().getNombre());
+                System.out.println(a); // Asegúrate de que Avatar.toString() muestra id, tipo, jugador, casilla
                 return;
             }
         }
@@ -248,7 +298,7 @@ public class Menu {
     private void descCasilla(String nombre) {
         Casilla c = tablero.encontrar_casilla(nombre);
         if (c != null)
-            System.out.println(c.infoCasilla());
+            System.out.println(c.infoCasilla()); // Asegúrate de que infoCasilla() muestra todos los campos requeridos
         else
             System.out.println("Casilla no encontrada.");
     }
@@ -277,6 +327,26 @@ public class Menu {
             System.out.println("Has salido de la cárcel.");
         } else {
             System.out.println("No estás en la cárcel.");
+        }
+    }
+
+    // Mostrar el tablero en modo texto
+    private void verTablero() {
+        System.out.println(tablero.toString()); // Asegúrate de que Tablero.toString() imprime el tablero como pide el enunciado
+    }
+
+    // Ejecutar comandos desde fichero
+    private void ejecutarComandosFichero(String fichero) {
+        try (Scanner fileScanner = new Scanner(new File(fichero))) {
+            while (fileScanner.hasNextLine()) {
+                String linea = fileScanner.nextLine().trim();
+                if (!linea.isEmpty()) {
+                    System.out.println("$> " + linea);
+                    analizarComando(linea);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("No se pudo abrir el fichero: " + fichero);
         }
     }
 }
