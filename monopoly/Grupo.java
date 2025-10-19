@@ -10,7 +10,7 @@ Representa un conjunto de casillas solares que comparten el mismo color.
 Sirve para determinar si un jugador posee todas las propiedades de un color,
 lo cual afecta a alquileres y la posibilidad de construir edificios.
 */
-class Grupo {
+public class Grupo {
 
     // Atributos
     private ArrayList<Casilla> miembros; // Lista que contiene todas las casillas que forman parte del grupo
@@ -33,11 +33,10 @@ class Grupo {
     *   colorGrupo: el color del grupo
     */
     public Grupo(Casilla cas1, Casilla cas2, String colorGrupo) {
-        miembros = new ArrayList<>(); // Crea la lista de miembros
-        miembros.add(cas1);           // Añade la primera casilla
-        miembros.add(cas2);           // Añade la segunda casilla
+        this();                     // Crea el estado base
+        anhadirCasilla(cas1);       // Añade la primera casilla
+        anhadirCasilla(cas2);       // Añade la segunda casilla
         this.colorGrupo = colorGrupo; // Asigna el color del grupo
-        numCasillas = 2;              // Indica que el grupo tiene 2 casillas
     }
 
     /* Constructor para grupos de TRES CASILLAS
@@ -46,12 +45,11 @@ class Grupo {
     *   colorGrupo: el color del grupo
     */
     public Grupo(Casilla cas1, Casilla cas2, Casilla cas3, String colorGrupo) {
-        miembros = new ArrayList<>(); // Crea la lista de miembros
-        miembros.add(cas1);           // Añade la primera casilla
-        miembros.add(cas2);           // Añade la segunda casilla
-        miembros.add(cas3);           // Añade la tercera casilla
+        this();                     // Crea el estado base
+        anhadirCasilla(cas1);       // Añade la primera casilla
+        anhadirCasilla(cas2);       // Añade la segunda casilla
+        anhadirCasilla(cas3);       // Añade la tercera casilla
         this.colorGrupo = colorGrupo; // Asigna el color del grupo
-        numCasillas = 3;              // Indica que el grupo tiene 3 casillas
     }
 
     /* Método para añadir una casilla al grupo
@@ -59,8 +57,10 @@ class Grupo {
     *   miembro: la casilla que se quiere añadir al grupo
     */
     public void anhadirCasilla(Casilla miembro) {
-        miembros.add(miembro); // Añade la casilla a la lista
-        numCasillas++;         // Incrementa el contador de casillas del grupo
+        if (!miembros.contains(miembro)) { // Evita duplicados
+            miembros.add(miembro); // Añade la casilla a la lista
+            numCasillas++;         // Incrementa el contador de casillas del grupo
+        }
     }
 
     /* Método que comprueba si un jugador es dueño de todas las casillas del grupo
@@ -71,9 +71,9 @@ class Grupo {
     */
     public boolean esDuenhoGrupo(Jugador jugador) {
         // Recorre todas las casillas del grupo
-        for(Casilla c : miembros) {
+        for (Casilla c : miembros) {
             // Si alguna casilla no pertenece al jugador, devuelve false
-            if(c.getDuenho() != jugador) {
+            if (c.getDuenho() != jugador) {
                 return false;
             }
         }
@@ -81,14 +81,23 @@ class Grupo {
         return true;
     }
 
+    // Getters útiles (suelen hacer falta en impresión/lógica)
+    public String getColorGrupo() {
+        return colorGrupo;
+    }
+
+    public int getNumCasillas() {
+        return numCasillas;
+    }
+
+    public ArrayList<Casilla> getMiembros() {
+        return miembros;
+    }
 }
 
-    /*necesario esto en casilla
-    // Getter para obtener el dueño de la casilla
-    public Jugador getDuenho() {
-        return duenho;
-    }
-    */
-
-
-
+/* necesario esto en Casilla
+// Getter para obtener el dueño de la casilla
+public Jugador getDuenho() {
+    return duenho;
+}
+*/
