@@ -215,7 +215,6 @@ public class Casilla {
     public float getPrecioPistaDeporte() { return precioPistaDeporte; }
     public float getHipoteca() { return hipoteca; }
 
-    // >>> cambios auxiliares
 
     // Determina el número de Solar (SolarX -> X), o -1 si no es solar
     private int numeroSolar() {
@@ -225,7 +224,7 @@ public class Casilla {
         return Integer.parseInt(d);
     }
 
-    // Nombre del grupo (color) por rango de SolarX (para Parte 1)
+    // Nombre del grupo (color) por rango de SolarX 
     private String nombreGrupo() {
         int n = numeroSolar();
         if (n < 0) return "-";
@@ -239,7 +238,7 @@ public class Casilla {
         return "Azul";
     }
 
-    // Alquiler base de SolarX según el Apéndice I (sin edificios)
+    // Alquiler base de SolarX según el Apéndice I
     private float alquilerBaseSolar(int n) {
         switch (n) {
             case 1:  return 20000f;
@@ -268,7 +267,7 @@ public class Casilla {
         }
     }
 
-    // Comprueba monopolio por rangos con el tablero ya creado (Parte 1, sin usar Grupo)
+    // Comprueba monopolio por rangos con el tablero ya creado
     private boolean duenhoTieneMonopolio(ArrayList<ArrayList<Casilla>> casillas, int n, Jugador dueno) {
         if (n < 0) return false;
         int inicio, fin; // ambos inclusive
