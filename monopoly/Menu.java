@@ -243,14 +243,15 @@ public class Menu {
 
     /*Lista todas las casillas en venta.*/
     private void listarVenta() {
-        for (ArrayList<Casilla> lado : tablero.getCasillas()) {
-            for (Casilla c : lado) {
-                if (c.getDuenho() == banca) {
-                    System.out.println(c.casEnVenta()); // Asegúrate de que casEnVenta() muestra tipo, grupo, valor...
-                }
+    for (ArrayList<Casilla> lado : tablero.getCasillas()) {
+        for (Casilla c : lado) {
+            if (c.getDuenho() == banca) {           
+                System.out.println(c.casEnVenta(banca)); 
             }
         }
     }
+}
+
 
     /*Pasa el turno al siguiente jugador.*/
     private void acabarTurno() {
