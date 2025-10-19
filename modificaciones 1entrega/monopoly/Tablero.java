@@ -36,7 +36,7 @@ public class Tablero {
         insertarLadoEste();
     }
 
-    // ----- Creación de casillas (misma disposición que el PDF) -----
+    // ----- Creación de casillas  -----
 
     private void insertarLadoSur() {
         ArrayList<Casilla> sur = posiciones.get(0);
@@ -136,7 +136,7 @@ public class Tablero {
         return sb.toString();
     }
 
-    // Celda de 9 caracteres: añadimos avatares, recortamos/ajustamos y coloreamos solo el nombre SolarX
+    
     private String formatearCasilla(Casilla c) {
         String nombre = c.getNombre();
         String texto = nombre;
@@ -157,17 +157,17 @@ public class Tablero {
         return padded;
     }
 
-    // Colores por grupos (aproximaciones ANSI básicas)
+    // Colores por grupos
     private String colorNombreSolar(String nombreSolar) {
         String d = nombreSolar.replaceAll("\\D", "");
         if (d.isEmpty()) return nombreSolar;
         int n = Integer.parseInt(d);
 
         String color;
-        if (n <= 2)       color = AMARILLO; // marrón ≈ amarillo
+        if (n <= 2)       color = AMARILLO; // amarillo casi marron
         else if (n <= 5)  color = CIAN;     // celeste
         else if (n <= 7)  color = MAGENTA;  // rosa
-        else if (n <= 10) color = AMARILLO; // naranja ≈ amarillo
+        else if (n <= 10) color = AMARILLO; // naranja casi amarillo
         else if (n <= 13) color = ROJO;     // rojo
         else if (n <= 16) color = AMARILLO; // amarillo
         else if (n <= 19) color = VERDE;    // verde
@@ -188,7 +188,7 @@ public class Tablero {
         return posiciones;
     }
 
-    // ----- Parking (necesario para Casilla.evaluarCasilla) -----
+    // ----- Parking -----
 
     public void anadirAlBote(float cantidad) {
         if (cantidad > 0) boteParking += cantidad;
