@@ -187,11 +187,22 @@ public class Menu {
         System.out.println("Jugador: " + actual.getNombre());
         System.out.println("Avatar: " + actual.getAvatar().getId() + " avanza " + total + " posiciones");
         System.out.println("}");
+        // calcular paso por Salida ANTES de mover
+        int posAnteriorIdx = actual.getAvatar().getLugar().getPosicion() - 1;
+        boolean pasaPorSalida = (posAnteriorIdx + total) >= 40;
+
         // Mover avatar por el tablero
         actual.getAvatar().moverAvatar(tablero.getCasillas(), total);
         Casilla nueva = actual.getAvatar().getLugar();
+
+        // ingreso por Salida si procede y NO cae en IrACárcel
+        if (pasaPorSalida && !nueva.getNombre().equalsIgnoreCase("IrACárcel")) {
+            actual.sumarFortuna(2000000f);
+        }
+
         System.out.println("Ahora estás en: " + nueva.getNombre());
-        solvente = nueva.evaluarCasilla(actual, banca, total);
+        // pasar tablero a evaluarCasilla
+        solvente = nueva.evaluarCasilla(actual, banca, total, tablero);
         if (!solvente) System.out.println("No puedes pagar, bancarrota!");
         tirado = true;
         verTablero(); // Repinta el tablero tras mover
@@ -210,10 +221,21 @@ public class Menu {
         System.out.println("Jugador: " + actual.getNombre());
         System.out.println("Avatar: " + actual.getAvatar().getId() + " avanza " + total + " posiciones");
         System.out.println("}");
+        // calcular paso por Salida ANTES de mover
+        int posAnteriorIdx = actual.getAvatar().getLugar().getPosicion() - 1;
+        boolean pasaPorSalida = (posAnteriorIdx + total) >= 40;
+
         actual.getAvatar().moverAvatar(tablero.getCasillas(), total);
         Casilla nueva = actual.getAvatar().getLugar();
+
+        // ingreso por Salida si procede y NO cae en IrACárcel
+        if (pasaPorSalida && !nueva.getNombre().equalsIgnoreCase("IrACárcel")) {
+            actual.sumarFortuna(2000000f);
+        }
+
         System.out.println("Ahora estás en: " + nueva.getNombre());
-        solvente = nueva.evaluarCasilla(actual, banca, total);
+        // pasar tablero a evaluarCasilla
+        solvente = nueva.evaluarCasilla(actual, banca, total, tablero);
         if (!solvente) System.out.println("No puedes pagar, bancarrota!");
         tirado = true;
         verTablero(); // Repinta el tablero tras mover
@@ -241,17 +263,10 @@ public class Menu {
         }
     }
 
-    /*Lista todas las casillas en venta.*/
+    /*Lista todas las casillas en venta. (La Parte 1 pide imprimir el tablero)*/
     private void listarVenta() {
-    for (ArrayList<Casilla> lado : tablero.getCasillas()) {
-        for (Casilla c : lado) {
-            if (c.getDuenho() == banca) {           
-                System.out.println(c.casEnVenta(banca)); 
-            }
-        }
+        verTablero();
     }
-}
-
 
     /*Pasa el turno al siguiente jugador.*/
     private void acabarTurno() {
@@ -321,6 +336,7 @@ public class Menu {
         if (actual.isEnCarcel()) {
             actual.sumarFortuna(-500000); // paga 500.000€
             actual.setTiradasCarcel(0);
+            actual.setEnCarcel(false);    // <<< NUEVO: marcar que ya no está en cárcel
             // Buscar casilla de salida
             Casilla salida = tablero.getCasillas().get(0).get(0);
             actual.getAvatar().setLugar(salida);
