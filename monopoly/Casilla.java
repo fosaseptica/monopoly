@@ -2,212 +2,350 @@ package monopoly;
 
 import partida.*;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.io.File;
+import java.io.FileNotFoundException;
 
+public class Menu {
 
-public class Casilla {
+    //Atributos
+    private ArrayList<Jugador> jugadores; //Jugadores de la partida.
+    private ArrayList<Avatar> avatares; //Avatares en la partida.
+    private int turno = 0; //Índice correspondiente al jugador que tiene el turno
+    private int lanzamientos; //Número de lanzamientos en el turno actual
+    private Tablero tablero; //Tablero del juego
+    private Dado dado1;
+    private Dado dado2;
+    private Jugador banca; //Jugador especial banca
+    private boolean tirado;
+    private boolean solvente;
+    private Scanner sc; //Para leer comandos de consola
 
-    //Atributos:
-    private String nombre; //Nombre de la casilla
-    private String tipo; //Tipo de casilla (Solar, Especial, Transporte, Servicios, Comunidad, Suerte y Impuesto).
-    private float valor; //Valor de esa casilla (precio de compra para solares).
-    private int posicion; //Posición que ocupa la casilla en el tablero (entero entre 1 y 40).
-    private Jugador duenho; //Dueño de la casilla (por defecto sería la banca).
-    private Grupo grupo; //Grupo al que pertenece la casilla (si es solar).
-    private float impuesto; //Cantidad a pagar por caer en la casilla: el alquiler en solares/servicios/transportes o impuestos.
-    private float hipoteca; //Valor otorgado por hipotecar una casilla
-    private float precioCasa; //Precio para construir una casa
-    private float precioHotel; //Precio para construir un hotel
-    private float precioPiscina; //Precio para construir una piscina
-    private float precioPistaDeporte; //Precio para construir una pista de deporte
-    private ArrayList<Avatar> avatares; //Avatares que están situados en la casilla.
-
-    //Constructores:
-    public Casilla() {
-        this.avatares = new ArrayList<>();
-    }//Parámetros vacíos
-
-    /*Constructor para casillas tipo Solar:
-    * Parámetros: nombre casilla, posición en el tablero, precio, hipoteca, precio casa,
-    * precio hotel, precio piscina, precio pista deporte y dueño.
-     */
-    public Casilla(String nombre, int posicion, float valor, float hipoteca, float precioCasa,
-                   float precioHotel, float precioPiscina, float precioPistaDeporte, Jugador duenho) {
-        this.nombre = nombre;
-        this.tipo = "Solar";
-        this.posicion = posicion;
-        this.valor = valor;
-        this.hipoteca = hipoteca;
-        this.precioCasa = precioCasa;
-        this.precioHotel = precioHotel;
-        this.precioPiscina = precioPiscina;
-        this.precioPistaDeporte = precioPistaDeporte;
-        this.duenho = duenho;
-        this.avatares = new ArrayList<>();
+    //Constructor: inicia el juego y el bucle de comandos
+    public Menu() {
+        jugadores = new ArrayList<>();
+        avatares = new ArrayList<>();
+        dado1 = new Dado();
+        dado2 = new Dado();
+        banca = new Jugador();
+        tablero = new Tablero(banca);
+        lanzamientos = 0;
+        tirado = false;
+        solvente = true;
+        sc = new Scanner(System.in);
+        System.out.println("=== MONOPOLY ETSE ===");
+        iniciarPartida();
     }
 
-    /*Constructor para casillas tipo Servicios o Transporte:
-    * Parámetros: nombre casilla, tipo (debe ser serv. o transporte), posición en el tablero, valor y dueño.
-     */
-    public Casilla(String nombre, String tipo, int posicion, float valor, Jugador duenho) {
-        this.nombre = nombre;
-        this.tipo = tipo;
-        this.posicion = posicion;
-        this.valor = valor;
-        this.duenho = duenho;
-        this.avatares = new ArrayList<>();
-    }
-
-    /*Constructor utilizado para inicializar las casillas de tipo IMPUESTOS.
-    * Parámetros: nombre, posición en el tablero, impuesto establecido y dueño.
-     */
-    public Casilla(String nombre, int posicion, float impuesto, Jugador duenho) {
-        this.nombre = nombre;
-        this.tipo = "Impuesto";
-        this.posicion = posicion;
-        this.impuesto = impuesto;
-        this.duenho = duenho;
-        this.avatares = new ArrayList<>();
-    }
-
-    /*Constructor utilizado para crear las otras casillas (Suerte, Caja de comunidad y Especiales):
-    * Parámetros: nombre, tipo de la casilla (será uno de los que queda), posición en el tablero y dueño.
-     */
-    public Casilla(String nombre, String tipo, int posicion, Jugador duenho) {
-        this.nombre = nombre;
-        this.tipo = tipo;
-        this.posicion = posicion;
-        this.duenho = duenho;
-        this.avatares = new ArrayList<>();
-    }
-
-    //Método utilizado para añadir un avatar al array de avatares en casilla.
-    public void anhadirAvatar(Avatar av) {
-         if (!avatares.contains(av)) {
-            avatares.add(av);
+    // Método principal de la partida: bucle de comandos
+    private void iniciarPartida() {
+        while (true) {
+            System.out.print("$> ");
+            String comando = sc.nextLine().trim();
+            if (comando.equalsIgnoreCase("salir")) {
+                System.out.println("¡Gracias por jugar!");
+                break;
+            }
+            analizarComando(comando);
         }
     }
 
-    //Método utilizado para eliminar un avatar del array de avatares en casilla.
-    public void eliminarAvatar(Avatar av) {
-        avatares.remove(av);
-    }
+    /* Interpreta el comando introducido y toma la acción correspondiente */
+    private void analizarComando(String comando) {
+        String[] partes = comando.split(" ");
+        if (partes.length == 0) return;
 
-    /*Método para evaluar qué hacer en una casilla concreta. Parámetros:
-    * - Jugador cuyo avatar está en esa casilla.
-    * - La banca (para ciertas comprobaciones).
-    * - El valor de la tirada: para determinar impuesto a pagar en casillas de servicios.
-    * Valor devuelto: true en caso de ser solvente (es decir, de cumplir las deudas), y false
-    * en caso de no cumplirlas.*/
-    public boolean evaluarCasilla(Jugador actual, Jugador banca, int tirada) {
-        if (tipo.equalsIgnoreCase("Impuesto")) {
-            return actual.pagar(impuesto, duenho); // el jugador paga impuesto
-        }
-        else if (tipo.equalsIgnoreCase("Solar") || tipo.equalsIgnoreCase("Transporte") || tipo.equalsIgnoreCase("Servicios")) {
-            if (duenho != null && duenho != banca && duenho != actual) {
-                float alquiler = this.impuesto;
-                // Servicios pueden depender de la tirada
-                if (tipo.equalsIgnoreCase("Servicios")) {
-                    alquiler = tirada * 4; // ejemplo de cálculo
+        switch (partes[0].toLowerCase()) {
+            case "crear":
+                if (partes.length >= 4 && partes[1].equalsIgnoreCase("jugador"))
+                    crearJugador(partes[2], partes[3]);
+                else
+                    System.out.println("Uso: crear jugador <nombre> <tipo_avatar>");
+                break;
+            case "listar":
+                if (partes.length >= 2 && partes[1].equalsIgnoreCase("jugadores"))
+                    listarJugadores();
+                else if (partes.length >= 2 && partes[1].equalsIgnoreCase("avatares"))
+                    listarAvatares();
+                else if (partes.length >= 2 && partes[1].equalsIgnoreCase("enventa"))
+                    listarVenta();
+                else
+                    System.out.println("Uso: listar jugadores | listar avatares | listar enventa");
+                break;
+            case "jugador":
+                mostrarTurnoActual();
+                break;
+            case "lanzar":
+                if (partes.length == 1) {
+                    lanzarDados();
+                } else if (partes.length == 3 && partes[1].equalsIgnoreCase("dados")) {
+                    // lanzar dados X+Y
+                    String[] nums = partes[2].split("\\+");
+                    if (nums.length == 2) {
+                        try {
+                            int d1 = Integer.parseInt(nums[0]);
+                            int d2 = Integer.parseInt(nums[1]);
+                            lanzarDadosForzados(d1, d2);
+                        } catch (NumberFormatException e) {
+                            System.out.println("Formato: lanzar dados X+Y");
+                        }
+                    } else {
+                        System.out.println("Formato: lanzar dados X+Y");
+                    }
+                } else {
+                    System.out.println("Uso: lanzar o lanzar dados X+Y");
                 }
-                return actual.pagar(alquiler, duenho);
+                break;
+            case "acabar":
+                if (partes.length >= 2 && partes[1].equalsIgnoreCase("turno"))
+                    acabarTurno();
+                else
+                    System.out.println("Uso: acabar turno");
+                break;
+            case "describir":
+                if (partes.length >= 3 && partes[1].equalsIgnoreCase("jugador"))
+                    descJugador(partes);
+                else if (partes.length >= 3 && partes[1].equalsIgnoreCase("avatar"))
+                    descAvatar(partes[2]);
+                else if (partes.length >= 2)
+                    descCasilla(partes[1]);
+                else
+                    System.out.println("Uso: describir jugador <nombre> | describir avatar <id> | describir <casilla>");
+                break;
+            case "comprar":
+                if (partes.length >= 2)
+                    comprar(partes[1]);
+                else
+                    System.out.println("Uso: comprar <nombre_casilla>");
+                break;
+            case "salir":
+                if (partes.length >= 2 && partes[1].equalsIgnoreCase("carcel"))
+                    salirCarcel();
+                else
+                    System.out.println("Uso: salir carcel");
+                break;
+            case "ver":
+                if (partes.length >= 2 && partes[1].equalsIgnoreCase("tablero"))
+                    verTablero();
+                else
+                    System.out.println("Uso: ver tablero");
+                break;
+            case "comandos":
+                if (partes.length >= 2)
+                    ejecutarComandosFichero(partes[1]);
+                else
+                    System.out.println("Uso: comandos <fichero>");
+                break;
+            default:
+                System.out.println("Comando no reconocido");
+        }
+    }
+
+    /*Crea un jugador con su tipo de avatar y lo coloca en la casilla de salida.*/
+    private void crearJugador(String nombre, String tipoAvatar) {
+        if (jugadores.size() >= 4) {
+            System.out.println("Máximo 4 jugadores.");
+            return;
+        }
+        // Casilla de inicio (Salida)
+        Casilla salida = tablero.getCasillas().get(0).get(0);
+        // Crear jugador con el tipo de avatar y colocarlo en la salida
+        Jugador nuevo = new Jugador(nombre, tipoAvatar, salida, avatares);
+        jugadores.add(nuevo);
+        System.out.println("{");
+        System.out.println("nombre: " + nombre + ",");
+        System.out.println("avatar: " + nuevo.getAvatar().getId());
+        System.out.println("}");
+        verTablero(); // Repinta el tablero tras crear jugador
+    }
+
+    /*Muestra el jugador que tiene el turno actual.*/
+    private void mostrarTurnoActual() {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores en la partida.");
+            return;
+        }
+        Jugador actual = jugadores.get(turno);
+        System.out.println("{");
+        System.out.println("nombre: " + actual.getNombre() + ",");
+        System.out.println("avatar: " + actual.getAvatar().getId());
+        System.out.println("}");
+    }
+
+    /*Lanza los dados y muestra la tirada.*/
+    private void lanzarDados() {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores en la partida.");
+            return;
+        }
+        Jugador actual = jugadores.get(turno);
+        int tirada1 = dado1.hacerTirada();
+        int tirada2 = dado2.hacerTirada();
+        int total = tirada1 + tirada2;
+        System.out.println("{");
+        System.out.println("Dados: " + tirada1 + " + " + tirada2 + " = " + total);
+        System.out.println("Jugador: " + actual.getNombre());
+        System.out.println("Avatar: " + actual.getAvatar().getId() + " avanza " + total + " posiciones");
+        System.out.println("}");
+        // Mover avatar por el tablero
+        actual.getAvatar().moverAvatar(tablero.getCasillas(), total);
+        Casilla nueva = actual.getAvatar().getLugar();
+        System.out.println("Ahora estás en: " + nueva.getNombre());
+        solvente = nueva.evaluarCasilla(actual, banca, total);
+        if (!solvente) System.out.println("No puedes pagar, bancarrota!");
+        tirado = true;
+        verTablero(); // Repinta el tablero tras mover
+    }
+
+    // Lanzar dados con valores forzados
+    private void lanzarDadosForzados(int d1, int d2) {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores en la partida.");
+            return;
+        }
+        Jugador actual = jugadores.get(turno);
+        int total = d1 + d2;
+        System.out.println("{");
+        System.out.println("Dados: " + d1 + " + " + d2 + " = " + total);
+        System.out.println("Jugador: " + actual.getNombre());
+        System.out.println("Avatar: " + actual.getAvatar().getId() + " avanza " + total + " posiciones");
+        System.out.println("}");
+        actual.getAvatar().moverAvatar(tablero.getCasillas(), total);
+        Casilla nueva = actual.getAvatar().getLugar();
+        System.out.println("Ahora estás en: " + nueva.getNombre());
+        solvente = nueva.evaluarCasilla(actual, banca, total);
+        if (!solvente) System.out.println("No puedes pagar, bancarrota!");
+        tirado = true;
+        verTablero(); // Repinta el tablero tras mover
+    }
+
+    /*Lista todos los jugadores con su información básica.*/
+    private void listarJugadores() {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores todavía.");
+            return;
+        }
+        for (Jugador j : jugadores) {
+            System.out.println(j); // Asegúrate de que Jugador.toString() muestra todos los campos requeridos
+        }
+    }
+
+    /*Lista todos los avatares creados.*/
+    private void listarAvatares() {
+        if (avatares.isEmpty()) {
+            System.out.println("No hay avatares creados.");
+            return;
+        }
+        for (Avatar a : avatares) {
+            System.out.println(a); // Asegúrate de que Avatar.toString() muestra id, tipo y jugador
+        }
+    }
+
+    /*Lista todas las casillas en venta.*/
+    private void listarVenta() {
+        for (ArrayList<Casilla> lado : tablero.getCasillas()) {
+            for (Casilla c : lado) {
+                if (c.getDuenho() == banca) {
+                    System.out.println(c.casEnVenta()); // Asegúrate de que casEnVenta() muestra tipo, grupo, valor...
+                }
             }
         }
-        // Si es Suerte o Comunidad, se gestionarían las cartas (no implementado aquí).
-        return true; // Por defecto, siempre solvente
     }
 
-    /*Método usado para comprar una casilla determinada. Parámetros:
-    * - Jugador que solicita la compra de la casilla.
-    * - Banca del monopoly (es el dueño de las casillas no compradas aún).*/
-    public void comprarCasilla(Jugador solicitante, Jugador banca) {
-        if (this.duenho == banca && solicitante.getFortuna() >= valor) {
-            solicitante.pagar(valor, banca);
-            this.duenho = solicitante;
-            solicitante.anhadirPropiedad(this);
+    /*Pasa el turno al siguiente jugador.*/
+    private void acabarTurno() {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores.");
+            return;
         }
+        turno = (turno + 1) % jugadores.size();
+        tirado = false;
+        Jugador siguiente = jugadores.get(turno);
+        System.out.println("{");
+        System.out.println("El jugador actual es " + siguiente.getNombre() + ".");
+        System.out.println("}");
     }
 
-    /*Método para añadir valor a una casilla. Utilidad:
-    * - Sumar valor a la casilla de parking.
-    * - Sumar valor a las casillas de solar al no comprarlas tras cuatro vueltas de todos los jugadores.
-    * Este método toma como argumento la cantidad a añadir del valor de la casilla.*/
-    public void sumarValor(float suma) {
-        this.valor += suma;
+    /*Muestra la información de un jugador.*/
+    private void descJugador(String[] partes) {
+        if (partes.length < 3) {
+            System.out.println("Uso: describir jugador <nombre>");
+            return;
+        }
+        String nombre = partes[2];
+        for (Jugador j : jugadores) {
+            if (j.getNombre().equalsIgnoreCase(nombre)) {
+                System.out.println(j); // Asegúrate de que Jugador.toString() muestra todos los campos requeridos
+                return;
+            }
+        }
+        System.out.println("Jugador no encontrado.");
     }
 
-    /*Método para mostrar información sobre una casilla.
-    * Devuelve una cadena con información específica de cada tipo de casilla.*/
-    public String infoCasilla() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Casilla ").append(posicion).append(": ").append(nombre).append(" (").append(tipo).append(")\n");
-        if (duenho != null) sb.append("Dueño: ").append(duenho.getNombre()).append("\n");
-        sb.append("Valor: ").append(valor).append("€\n");
-        if (tipo.equalsIgnoreCase("Solar")) {
-            sb.append("Hipoteca: ").append(hipoteca).append("€\n");
-            sb.append("Precio casa: ").append(precioCasa).append("€\n");
-            sb.append("Precio hotel: ").append(precioHotel).append("€\n");
-            sb.append("Precio piscina: ").append(precioPiscina).append("€\n");
-            sb.append("Precio pista deporte: ").append(precioPistaDeporte).append("€\n");
+    /*Muestra la información de un avatar.*/
+    private void descAvatar(String ID) {
+        for (Avatar a : avatares) {
+            if (a.getId().equalsIgnoreCase(ID)) {
+                System.out.println(a); // Asegúrate de que Avatar.toString() muestra id, tipo, jugador, casilla
+                return;
+            }
+        }
+        System.out.println("Avatar no encontrado.");
+    }
+
+    /*Muestra la información de una casilla.*/
+    private void descCasilla(String nombre) {
+        Casilla c = tablero.encontrar_casilla(nombre);
+        if (c != null)
+            System.out.println(c.infoCasilla()); // Asegúrate de que infoCasilla() muestra todos los campos requeridos
+        else
+            System.out.println("Casilla no encontrada.");
+    }
+
+    /*Permite comprar una casilla si está en venta.*/
+    private void comprar(String nombre) {
+        Jugador actual = jugadores.get(turno);
+        Casilla c = tablero.encontrar_casilla(nombre);
+        if (c != null && c.getDuenho() == banca) {
+            c.comprarCasilla(actual, banca);
+            System.out.println("Has comprado: " + c.getNombre());
         } else {
-            sb.append("Impuesto: ").append(impuesto).append("€\n");
+            System.out.println("Casilla no encontrada o ya comprada");
         }
-        sb.append("Avatares: ");
-        for (Avatar av : avatares) {
-            sb.append(av.toString()).append(" ");
-        }
-        return sb.toString();
     }
 
-    /* Método para mostrar información de una casilla en venta.
-     * Valor devuelto: texto con esa información.
-     */
-    public String casEnVenta() {
-         if (duenho == null) {
-            return nombre + " está en venta por " + valor + "€";
+    /*Permite salir de la cárcel pagando.*/
+    private void salirCarcel() {
+        Jugador actual = jugadores.get(turno);
+        if (actual.isEnCarcel()) {
+            actual.sumarFortuna(-500000); // paga 500.000€
+            actual.setTiradasCarcel(0);
+            // Buscar casilla de salida
+            Casilla salida = tablero.getCasillas().get(0).get(0);
+            actual.getAvatar().setLugar(salida);
+            System.out.println("Has salido de la cárcel.");
         } else {
-            return nombre + " ya tiene dueño (" + duenho.getNombre() + ")";
+            System.out.println("No estás en la cárcel.");
         }
     }
 
-     // Getters
-    public int getPosicion() {
-        return posicion;
+    // Mostrar el tablero en modo texto
+    private void verTablero() {
+        System.out.println(tablero.toString()); // Asegúrate de que Tablero.toString() imprime el tablero como pide el enunciado
     }
 
-    public String getNombre() {
-        return nombre;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public Jugador getDuenho() {
-        return duenho;
-    }
-
-    public ArrayList<Avatar> getAvatares() {
-        return avatares;
-    }
-
-    public float getPrecioCasa() {
-        return precioCasa;
-    }
-
-    public float getPrecioHotel() {
-        return precioHotel;
-    }
-
-    public float getPrecioPiscina() {
-        return precioPiscina;
-    }
-
-    public float getPrecioPistaDeporte() {
-        return precioPistaDeporte;
-    }
-
-    public float getHipoteca() {
-        return hipoteca;
+    // Ejecutar comandos desde fichero
+    private void ejecutarComandosFichero(String fichero) {
+        try (Scanner fileScanner = new Scanner(new File(fichero))) {
+            while (fileScanner.hasNextLine()) {
+                String linea = fileScanner.nextLine().trim();
+                if (!linea.isEmpty()) {
+                    System.out.println("$> " + linea);
+                    analizarComando(linea);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("No se pudo abrir el fichero: " + fichero);
+        }
     }
 }
-
