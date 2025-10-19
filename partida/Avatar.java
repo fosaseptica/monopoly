@@ -45,18 +45,18 @@ public class Avatar {
 
         // Determinar lado e índice dentro del lado
         int lado, index;
-        if (nuevaPos < 11) {            // lado superior
+        if (nuevaPos <= 10) {            // lado superior
             lado = 0;
             index = nuevaPos;
-        } else if (nuevaPos < 20) {     // lado izquierdo
+        } else if (nuevaPos <= 20) {     // lado izquierdo
             lado = 1;
             index = nuevaPos - 11;
-        } else if (nuevaPos < 31) {     // lado inferior
+        } else if (nuevaPos <= 31) {     // lado inferior
             lado = 2;
-            index = nuevaPos - 20;
-        } else {                        // lado derecho
+            index = nuevaPos - 21;
+        } else {                         // lado derecho
             lado = 3;
-            index = nuevaPos - 31;
+            index = nuevaPos - 32;
         }
 
         // Asignar la nueva casilla
