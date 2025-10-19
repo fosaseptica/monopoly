@@ -5,7 +5,6 @@ import monopoly.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-
 public class Avatar {
 
     //Atributos
@@ -23,13 +22,12 @@ public class Avatar {
     * avatares creados (usado para crear un ID distinto del de los demás avatares).
      */
     public Avatar(String tipo, Jugador jugador, Casilla lugar, ArrayList<Avatar> avCreados) {
-        this.tipo=tipo;
-        this.jugador=jugador;
-        this.lugar=lugar;
+        this.tipo = tipo;
+        this.jugador = jugador;
+        this.lugar = lugar;
         generarId(avCreados);
         avCreados.add(this);
         lugar.anhadirAvatar(this);
-        
     }
 
     //A continuación, tenemos otros métodos útiles para el desarrollo del juego.
@@ -40,26 +38,20 @@ public class Avatar {
      */
     public void moverAvatar(ArrayList<ArrayList<Casilla>> casillas, int valorTirada) {
         Casilla casillaAnterior = lugar;
-        int posActual = casillaAnterior.getPosicion() - 1; 
-        int nuevaPos = (posActual + valorTirada) % 40;  // 40 casillas
+        int posActual = casillaAnterior.getPosicion(); // 0..39 (Salida = 0)
+        int nuevaPos = (posActual + valorTirada) % 40;
 
-        // Determinar lado e índice dentro del lado
         int lado, index;
-        if (nuevaPos <= 10) {            // lado superior
-            lado = 0;
-            index = nuevaPos;
-        } else if (nuevaPos <= 20) {     // lado izquierdo
-            lado = 1;
-            index = nuevaPos - 11;
-        } else if (nuevaPos <= 31) {     // lado inferior
-            lado = 2;
-            index = nuevaPos - 21;
-        } else {                         // lado derecho
-            lado = 3;
-            index = nuevaPos - 32;
+        if (nuevaPos <= 10) {          // sur 0..10
+            lado = 0; index = nuevaPos;
+        } else if (nuevaPos <= 19) {   // oeste 11..19
+            lado = 1; index = nuevaPos - 11;
+        } else if (nuevaPos <= 30) {   // norte 20..30
+            lado = 2; index = nuevaPos - 20;
+        } else {                       // este 31..39
+            lado = 3; index = nuevaPos - 31;
         }
 
-        // Asignar la nueva casilla
         Casilla nuevaCasilla = casillas.get(lado).get(index);
         casillaAnterior.eliminarAvatar(this);
         this.lugar = nuevaCasilla;
@@ -74,44 +66,19 @@ public class Avatar {
         Random rand = new Random();
         String candidato;
         boolean repetido;
-
         do {
             candidato = String.valueOf((char) ('A' + rand.nextInt(26)));
             repetido = false;
             for (Avatar a : avCreados) {
-                if (a.getId().equals(candidato)) {
-                    repetido = true;
-                    break;
-                }
+                if (a.getId().equals(candidato)) { repetido = true; break; }
             }
         } while (repetido);
-
         this.id = candidato;
     }
 
-    // Getters y Setters
-    public String getId() {
-        return id;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public Jugador getJugador() {
-        return jugador;
-    }
-
-    public Casilla getLugar() {
-        return lugar;
-    }
-
-    public void setLugar(Casilla lugar) {
-        this.lugar = lugar;
-    }
-    @Override
-    public String toString() {
-        return "Avatar " + id + " (" + tipo + ")";
-    }
-
+    public String getId() { return id; }
+    public String getTipo() { return tipo; }
+    public Jugador getJugador() { return jugador; }
+    public Casilla getLugar() { return lugar; }
+    public void setLugar(Casilla lugar) { this.lugar = lugar; }
 }
