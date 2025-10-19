@@ -4,12 +4,22 @@ import partida.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-
 public class Tablero {
     //Atributos.
     private ArrayList<ArrayList<Casilla>> posiciones; //Posiciones del tablero: se define como un arraylist de arraylists de casillas (uno por cada lado del tablero).
     private HashMap<String, Grupo> grupos; //Grupos del tablero, almacenados como un HashMap con clave String (será el color del grupo).
     private Jugador banca; //Un jugador que será la banca.
+
+    // === Códigos ANSI para color en consola (reset + 8 colores básicos) ===
+    private static final String RESET   = "\u001B[0m";
+    private static final String NEGRO   = "\u001B[30m";
+    private static final String ROJO    = "\u001B[31m";
+    private static final String VERDE   = "\u001B[32m";
+    private static final String AMARILLO= "\u001B[33m";
+    private static final String AZUL    = "\u001B[34m";
+    private static final String MAGENTA = "\u001B[35m";
+    private static final String CIAN    = "\u001B[36m";
+    private static final String BLANCO  = "\u001B[37m";
 
     //Constructor: únicamente le pasamos el jugador banca (que se creará desde el menú).
     public Tablero(Jugador banca) {
@@ -95,6 +105,41 @@ public class Tablero {
         este.add(new Casilla("IrACárcel", "Especial", 40, banca));
     }
 
+    // === Helper: devuelve el nombre coloreado si es SolarX ===
+    private String colorizar(Casilla c) {
+        String nombre = c.getNombre();
+        // Coloreamos solo solares, el resto se devuelve tal cual
+        if (!nombre.startsWith("Solar")) return nombre;
+
+        // Extraemos el número del solar (e.g., "Solar17" -> "17")
+        String digitos = nombre.replaceAll("\\D", "");
+        if (digitos.isEmpty()) return nombre;
+        int n = Integer.parseInt(digitos);
+
+        String color = colorParaSolar(n);
+        return color + nombre + RESET;
+    }
+
+    
+    private String colorParaSolar(int n) {
+        if (n >= 1  && n <= 2)  return MARRON();
+        if (n >= 3  && n <= 5)  return CIAN;          // Celeste
+        if (n >= 6  && n <= 7)  return MAGENTA;       // Rosa
+        if (n >= 8  && n <= 10) return AMARILLO;      // Naranja/Amarillo
+        if (n >= 11 && n <= 13) return ROJO;          // Rojo
+        if (n >= 14 && n <= 16) return AMARILLO_FUERTE();
+        if (n >= 17 && n <= 19) return VERDE;         // Verde
+        if (n >= 20 && n <= 22) return AZUL;          // Azul oscuro
+        return BLANCO; // fallback
+    }
+
+    private String MARRON() {
+        return ROJO;
+    }
+    private String AMARILLO_FUERTE() {
+        return AMARILLO;
+    }
+
     //Para imprimir el tablero, modificamos el método toString().
     @Override
     public String toString() {
@@ -102,7 +147,8 @@ public class Tablero {
         for (int i = 0; i < posiciones.size(); i++) {
             sb.append("Lado ").append(i).append(": ");
             for (Casilla c : posiciones.get(i)) {
-                sb.append(c.getNombre()).append(" | ");
+                // ANTES: sb.append(c.getNombre()).append(" | ");
+                sb.append(colorizar(c)).append(" | ");
             }
             sb.append("\n");
         }
