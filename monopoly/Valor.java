@@ -19,4 +19,3 @@ public class Valor {
     public static final String WHITE = "\u001B[37m";
 
 }
-
