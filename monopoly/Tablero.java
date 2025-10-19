@@ -11,6 +11,16 @@ public class Tablero {
     private Jugador banca; //Un jugador que será la banca.
     private float boteParking = 0f;
 
+    // === ANSI ===
+    private static final String RESET     = "\u001B[0m";
+    private static final String SUBRAYO   = "\u001B[4m";
+    private static final String ROJO      = "\u001B[31m";
+    private static final String VERDE     = "\u001B[32m";
+    private static final String AMARILLO  = "\u001B[33m";
+    private static final String AZUL      = "\u001B[34m";
+    private static final String MAGENTA   = "\u001B[35m";
+    private static final String CIAN      = "\u001B[36m";
+
     //Constructor: únicamente le pasamos el jugador banca (que se creará desde el menú).
     public Tablero(Jugador banca) {
         this.banca = banca;
@@ -132,17 +142,46 @@ public class Tablero {
 
     // ---- auxiliares internas ----
     private String formatearCasilla(Casilla c) {
-        String t = c.getNombre();
+        String nombre = c.getNombre();  // p.ej. "Solar12"
+        String texto  = nombre;
+
+        // Añadir avatares si los hay (p.ej. "Solar9 &H")
         if (!c.getAvatares().isEmpty()) {
-            StringBuilder s = new StringBuilder(t).append("&");
+            StringBuilder s = new StringBuilder(nombre).append(" &");
             for (Avatar a : c.getAvatares()) s.append(a.getId());
-            t = s.toString();
+            texto = s.toString();
         }
-        if (t.length() > 9) t = t.substring(0, 9);
-        return String.format("%-9s", t);
+
+        // Recortar a 9 y padear a 9 para el dibujo
+        if (texto.length() > 9) texto = texto.substring(0, 9);
+        String padded = String.format("%-9s", texto);
+
+        // Aplicar color/estilo SOLO al nombre de solares, sin romper el ancho de celda
+        if ("Solar".equalsIgnoreCase(c.getTipo())) {
+            String coloreado = colorParaSolar(nombre) + SUBRAYO + nombre + RESET;
+            // Sustituir la primera aparición del nombre dentro del padded
+            padded = padded.replaceFirst(java.util.regex.Pattern.quote(nombre), coloreado);
+        }
+        return padded;
     }
 
-    // Necesario para Parking (Parte 1)
+    // Colores por grupos 1–22
+    private String colorParaSolar(String nombreSolar) {
+        String d = nombreSolar.replaceAll("\\D", "");
+        if (d.isEmpty()) return RESET;
+        int n = Integer.parseInt(d);
+
+        if (n <= 2)       return AMARILLO; // (marrón aproximado)
+        else if (n <= 5)  return CIAN;     // cian
+        else if (n <= 7)  return MAGENTA;  // rosa
+        else if (n <= 10) return AMARILLO; // naranja aproximada
+        else if (n <= 13) return ROJO;     // rojo
+        else if (n <= 16) return AMARILLO; // amarillo
+        else if (n <= 19) return VERDE;    // verde
+        else              return AZUL;     // azul
+    }
+
+    // Necesario para Parking 
     public void anadirAlBote(float cantidad){ if (cantidad > 0) boteParking += cantidad; }
     public float cobrarBote(){ float b = boteParking; boteParking = 0f; return b; }
     public float getBote(){ return boteParking; }
