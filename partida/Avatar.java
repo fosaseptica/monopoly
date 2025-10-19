@@ -39,7 +39,8 @@ public class Avatar {
     * EN ESTA VERSIÓN SUPONEMOS QUE valorTirada siemrpe es positivo.
      */
     public void moverAvatar(ArrayList<ArrayList<Casilla>> casillas, int valorTirada) {
-        int posActual = lugar.getPosicion() - 1; 
+        Casilla casillaAnterior = lugar;
+        int posActual = casillaAnterior.getPosicion() - 1; 
         int nuevaPos = (posActual + valorTirada) % 40;  // 40 casillas
 
         // Determinar lado e índice dentro del lado
@@ -59,7 +60,9 @@ public class Avatar {
         }
 
         // Asignar la nueva casilla
-        this.lugar = casillas.get(lado).get(index);
+        Casilla nuevaCasilla = casillas.get(lado).get(index);
+        casillaAnterior.eliminarAvatar(this);
+        this.lugar = nuevaCasilla;
         lugar.anhadirAvatar(this);
     }
 
