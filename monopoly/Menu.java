@@ -152,7 +152,6 @@ public class Menu {
         // Crear jugador con el tipo de avatar y colocarlo en la salida
         Jugador nuevo = new Jugador(nombre, tipoAvatar, salida, avatares);
         jugadores.add(nuevo);
-        avatares.add(nuevo.getAvatar());
         System.out.println("{");
         System.out.println("nombre: " + nombre + ",");
         System.out.println("avatar: " + nuevo.getAvatar().getId());
