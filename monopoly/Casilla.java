@@ -135,10 +135,12 @@ public class Casilla {
                     // Parte 1: 250.000 fijos
                     alquiler = 250000f;
                 } else {
-                    // Solar: alquiler base del Apéndice I, doblado si monopolio sin edificios
+                    // Solar: calcular alquiler teniendo en cuenta edificios. Si existe monopolio
+                    // y NO hay edificios, el alquiler se dobla (regla de la Parte 1).
                     int n = numeroSolar();
-                    alquiler = alquilerBaseSolar(n);
-                    if (duenhoTieneMonopolio(tablero.getCasillas(), n, duenho)) {
+                    alquiler = alquilerTotal(n);
+                    int totalEd = numCasas + numHoteles + numPiscinas + numPistas;
+                    if (duenhoTieneMonopolio(tablero.getCasillas(), n, duenho) && totalEd == 0) {
                         alquiler *= 2f;
                     }
                 }
@@ -182,8 +184,19 @@ public class Casilla {
             sb.append("Precio hotel: ").append(precioHotel).append("€\n");
             sb.append("Precio piscina: ").append(precioPiscina).append("€\n");
             sb.append("Precio pista deporte: ").append(precioPistaDeporte).append("€\n");
+
+            int totalEdificios = numCasas + numHoteles + numPiscinas + numPistas;
+            if (totalEdificios == 0) {
+                sb.append("No hay edificios construidos.\n");
+            } else {
+                sb.append("Edificios construidos:\n");
+                if (numCasas > 0) sb.append(" - Casas: ").append(numCasas).append("\n");
+                if (numHoteles > 0) sb.append(" - Hoteles: ").append(numHoteles).append("\n");
+                if (numPiscinas > 0) sb.append(" - Piscinas: ").append(numPiscinas).append("\n");
+                if (numPistas > 0) sb.append(" - Pistas de deporte: ").append(numPistas).append("\n");
+            }
             int n = numeroSolar();
-            sb.append("Alquiler base: ").append(alquilerBaseSolar(n)).append("€\n");
+            sb.append("Alquiler total actual: ").append(alquilerTotal(n)).append("€\n");
         } else if (tipo.equalsIgnoreCase("Servicio")) {
             sb.append("Alquiler (Parte 1): 4 × tirada × 50000\n");
         } else if (tipo.equalsIgnoreCase("Transporte")) {
@@ -352,6 +365,29 @@ public class Casilla {
             case 22: return 500000f;
             default: return 0f;
         }
+    }
+
+    /**
+     * Calcula el alquiler total de una Solar teniendo en cuenta los edificios construidos.
+     * Nota: no comprueba el monopolio del dueño (doblaría el alquiler si existe monopolio y no hay edificios)
+     * porque para eso se necesita el tablero completo; el efecto del monopolio sin edificios se aplica
+     * al calcular el alquiler en tiempo de pago (ver evaluarCasilla).
+     */
+    private float alquilerTotal(int n) {
+        float base = alquilerBaseSolar(n);
+        if (base <= 0f) return 0f;
+
+        // Incrementos por tipo de edificio (valores de ejemplo - ajustar según reglas deseadas)
+        float total = base;
+        // Cada casa añade 50% del alquiler base
+        total += numCasas * (base * 0.5f);
+        // Cada hotel añade 200% del alquiler base
+        total += numHoteles * (base * 2.0f);
+        // Piscina y pista de deporte son mejoras especiales: añaden un porcentaje del alquiler base
+        total += numPiscinas * (base * 0.25f);
+        total += numPistas * (base * 0.30f);
+
+        return total;
     }
 
     // Comprueba monopolio por rangos con el tablero ya creado
