@@ -19,6 +19,11 @@ public class Casilla {
     private float precioPiscina; //Precio para construir una piscina
     private float precioPistaDeporte; //Precio para construir una pista de deporte
     private ArrayList<Avatar> avatares; //Avatares que están situados en la casilla.
+    private int numCasas = 0;
+    private int numHoteles = 0;
+    private int numPiscinas = 0;
+    private int numPistas = 0;
+
 
     //Constructores:
     public Casilla() {
@@ -203,6 +208,82 @@ public class Casilla {
         return nombre + " ya tiene dueño (" + duenho.getNombre() + ")";
     }
 
+    public void edificar(String tipoEdificio, Jugador jugador) {
+        if (!tipo.equalsIgnoreCase("Solar")) {
+            System.out.println("Solo se puede edificar en solares.");
+            return;
+        }
+
+        float coste = 0;
+
+        switch (tipoEdificio.toLowerCase()) {
+            case "casa":
+                if (numCasas >= 4) {
+                    System.out.println("No se pueden construir más casas en esta casilla.");
+                    return;
+                }
+                coste = valor * 0.6f;
+                numCasas++;
+                break;
+
+            case "hotel":
+                if (numCasas < 4) {
+                    System.out.println("Debe tener 4 casas antes de construir un hotel.");
+                    return;
+                }
+                if (numHoteles >= 1) {
+                    System.out.println("Ya hay un hotel en esta casilla.");
+                    return;
+                }
+                coste = valor * 0.6f;
+                numHoteles++;
+                break;
+
+            case "piscina":
+                if (numHoteles < 1) {
+                    System.out.println("No se puede edificar una piscina sin tener un hotel.");
+                    return;
+                }
+                if (numPiscinas >= 1) {
+                    System.out.println("Ya existe una piscina en esta casilla.");
+                    return;
+                }
+                coste = valor * 0.4f;
+                numPiscinas++;
+                break;
+
+            case "pista_deporte":
+                if (numHoteles < 1) {
+                    System.out.println("Debe existir un hotel antes de construir una pista de deporte.");
+                    return;
+                }
+                if (numPistas >= 1) {
+                    System.out.println("Ya hay una pista de deporte en esta casilla.");
+                    return;
+                }
+                coste = valor * 0.8f;
+                numPistas++;
+                break;
+
+            default:
+                System.out.println("Tipo de edificio no válido.");
+                return;
+        }
+
+        // Comprobamos si el jugador tiene dinero
+        if (jugador.getFortuna() < coste) {
+            System.out.println("La fortuna de " + jugador.getNombre() + " no es suficiente para edificar " + tipoEdificio + " en " + nombre + ".");
+            return;
+        }
+
+        // Actualizamos fortuna y gastos
+        jugador.sumarFortuna(-coste);
+        jugador.sumarGastos(coste);
+
+        System.out.println("Se ha edificado una " + tipoEdificio + " en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
+}
+
+
     // Getters
     public int getPosicion() { return posicion; }
     public String getNombre() { return nombre; }
@@ -216,6 +297,11 @@ public class Casilla {
     public float getPrecioPistaDeporte() { return precioPistaDeporte; }
     public float getHipoteca() { return hipoteca; }
     public String getGrupoColor() { return nombreGrupo(); }
+    public int getNumCasas() { return numCasas; }
+    public int getNumHoteles() { return numHoteles; }
+    public int getNumPiscinas() { return numPiscinas; }
+    public int getNumPistas() { return numPistas; }
+
 
     // Determina el número de Solar (SolarX -> X), o -1 si no es solar
     private int numeroSolar() {
