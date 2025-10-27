@@ -61,7 +61,7 @@ public class Jugador {
         this.tiradasCarcel = 0;
         for (ArrayList<Casilla> lado : pos) {
             for (Casilla c : lado) {
-                if (c.getTipo().equalsIgnoreCase("Cárcel")) {
+                if (c.getNombre().equalsIgnoreCase("Cárcel") || c.getNombre().equalsIgnoreCase("Carcel")) {
                     avatar.getLugar().eliminarAvatar(avatar);
                     avatar.setLugar(c);
                     c.anhadirAvatar(avatar);
