@@ -234,6 +234,12 @@ public class Menu {
         }
 
         Jugador actual = jugadores.get(turno);
+        
+        // Bloquea si ya tiró y no hay dobles pendientes
+        if (tirado) {
+            System.out.println("Ya has tirado en este turno. Debes acabar el turno o esperar a un doble.");
+            return;
+        }
 
         // Generar valores aleatorios si no se pasan
         if (d1 < 0 || d2 < 0) {
