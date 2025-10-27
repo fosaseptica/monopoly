@@ -209,12 +209,13 @@ public class Casilla {
     public String getTipo() { return tipo; }
     public Jugador getDuenho() { return duenho; }
     public ArrayList<Avatar> getAvatares() { return avatares; }
+    public float getValor() { return valor; }
     public float getPrecioCasa() { return precioCasa; }
     public float getPrecioHotel() { return precioHotel; }
     public float getPrecioPiscina() { return precioPiscina; }
     public float getPrecioPistaDeporte() { return precioPistaDeporte; }
     public float getHipoteca() { return hipoteca; }
-
+    public String getGrupoColor() { return nombreGrupo(); }
 
     // Determina el número de Solar (SolarX -> X), o -1 si no es solar
     private int numeroSolar() {
@@ -280,7 +281,6 @@ public class Casilla {
         else if (n <= 19){ inicio = 17; fin = 19; }
         else             { inicio = 20; fin = 22; }
 
-        // Recorremos todas las casillas del tablero y buscamos esos SolarX
         int encontrados = 0;
         int delDueno = 0;
         for (ArrayList<Casilla> lado : casillas) {
