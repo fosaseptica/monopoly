@@ -260,26 +260,13 @@ public class Menu {
         if (lanzamientos == 3) {
             System.out.println("¡Tres dobles seguidos! Vas directamente a la cárcel.");
 
-            Casilla carcel = tablero.encontrar_casilla("Cárcel");
-            if (carcel == null) carcel = tablero.encontrar_casilla("Carcel");
-            if (carcel == null) carcel = tablero.encontrar_casilla("IrACárcel");
-
-            if (carcel == null) {
-                System.out.println("⚠️ No se encontró la casilla de cárcel en el tablero.");
-                return;
-            }
-
             // Mover avatar a la cárcel
-            Casilla actualLugar = actual.getAvatar().getLugar();
-            actualLugar.eliminarAvatar(actual.getAvatar());
-            carcel.anhadirAvatar(actual.getAvatar());
-            actual.getAvatar().setLugar(carcel);
-
-            actual.setEnCarcel(true);
+            actual.encarcelar(tablero.getCasillas());
             lanzamientos = 0;
             tirado = true;
-
+            
             System.out.println("El avatar " + actual.getAvatar().getId() + " ha sido enviado a la cárcel.");
+            
             verTablero();
             return;
         }
