@@ -73,6 +73,9 @@ public class Casilla {
         this.avatares = new ArrayList<>();
     }
 
+    public void setGrupo(Grupo grupo) { this.grupo = grupo; }
+    public Grupo getGrupo() { return grupo; }
+
     /*Constructor utilizado para crear las otras casillas (Suerte, Caja de comunidad y Especiales):
     * Parámetros: nombre, tipo de la casilla (será uno de los que queda), posición en el tablero y dueño.
      */
@@ -140,7 +143,7 @@ public class Casilla {
                     int n = numeroSolar();
                     alquiler = alquilerTotal(n);
                     int totalEd = numCasas + numHoteles + numPiscinas + numPistas;
-                    if (duenhoTieneMonopolio(tablero.getCasillas(), n, duenho) && totalEd == 0) {
+                     if (grupo != null && grupo.esDuenhoGrupo(duenho) && totalEd == 0) {
                         alquiler *= 2f;
                     }
                 }
