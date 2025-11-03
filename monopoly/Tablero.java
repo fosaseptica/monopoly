@@ -28,6 +28,7 @@ public class Tablero {
         this.grupos = new HashMap<>();
         for (int i = 0; i < 4; i++) posiciones.add(new ArrayList<>());
         generarCasillas();
+        crearGrupos();
     }
 
     //Método para crear todas las casillas del tablero. Formado a su vez por cuatro métodos (1/lado).
@@ -97,6 +98,35 @@ public class Tablero {
         este.add(new Casilla("Imp2", 38, 2000000f, banca));
         este.add(new Casilla("Solar22", 39, 4000000f, 2000000f, 2000000f, 2000000f, 400000f, 800000f, banca));
     }
+
+        private void crearGrupos() {
+        Grupo marron = new Grupo(encontrar_casilla("Solar1"), encontrar_casilla("Solar2"), "Marrón");
+        Grupo cian   = new Grupo(encontrar_casilla("Solar3"), encontrar_casilla("Solar4"), encontrar_casilla("Solar5"), "Cian");
+        Grupo rosa   = new Grupo(encontrar_casilla("Solar6"), encontrar_casilla("Solar7"), "Rosa");
+        Grupo naranja= new Grupo(encontrar_casilla("Solar8"), encontrar_casilla("Solar9"), encontrar_casilla("Solar10"), "Naranja");
+        Grupo rojo   = new Grupo(encontrar_casilla("Solar11"), encontrar_casilla("Solar12"), encontrar_casilla("Solar13"), "Rojo");
+        Grupo amarillo = new Grupo(encontrar_casilla("Solar14"), encontrar_casilla("Solar15"), encontrar_casilla("Solar16"), "Amarillo");
+        Grupo verde  = new Grupo(encontrar_casilla("Solar17"), encontrar_casilla("Solar18"), encontrar_casilla("Solar19"), "Verde");
+        Grupo azul   = new Grupo(encontrar_casilla("Solar20"), encontrar_casilla("Solar21"), encontrar_casilla("Solar22"), "Azul");
+
+        grupos.put("Marrón", marron);
+        grupos.put("Cian", cian);
+        grupos.put("Rosa", rosa);
+        grupos.put("Naranja", naranja);
+        grupos.put("Rojo", rojo);
+        grupos.put("Amarillo", amarillo);
+        grupos.put("Verde", verde);
+        grupos.put("Azul", azul);
+
+        // Vincular cada solar con su grupo
+        for (Grupo g : grupos.values()) {
+            for (Casilla c : g.getMiembros()) {
+                if (c != null) c.setGrupo(g);
+            }
+        }
+    }
+
+    
 
     //Para imprimir el tablero, modificamos el método toString().
     @Override
