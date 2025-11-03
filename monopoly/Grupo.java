@@ -93,6 +93,13 @@ public class Grupo {
     public ArrayList<Casilla> getMiembros() {
         return miembros;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Grupo " + colorGrupo + ": ");
+        for (Casilla c : miembros) sb.append(c.getNombre()).append(" ");
+        return sb.toString();
+    }
 }
 
 /* necesario esto en Casilla
