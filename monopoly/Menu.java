@@ -391,10 +391,8 @@ public class Menu {
             actual.sumarFortuna(-500000); // paga 500.000€
             actual.setTiradasCarcel(0);
             actual.setEnCarcel(false);
-            // En esta entrega lo situamos en Salida (decisión simplificada)
-            Casilla salida = tablero.getCasillas().get(0).get(0);
-            actual.getAvatar().setLugar(salida);
-            System.out.println("Has salido de la cárcel.");
+            // El jugador queda libre pero permanece en la casilla Cárcel (no se teletransporta a Salida)
+            System.out.println(actual.getNombre() + " paga 500000€ y sale de la cárcel. Puede lanzar los dados.");
             verTablero();
         } else {
             System.out.println("No estás en la cárcel.");
