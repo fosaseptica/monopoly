@@ -178,6 +178,32 @@ public class Menu {
                 }
                 break;
 
+            case "edificar":
+                // Uso: edificar <tipo>
+                if (partes.length >= 2) {
+                    if (jugadores.isEmpty()) {
+                        System.out.println("No hay jugadores en la partida.");
+                        break;
+                    }
+                    Jugador actualEd = jugadores.get(turno);
+                    Casilla donde = actualEd.getAvatar().getLugar();
+                    String tipoEd = partes[1];
+                    // Permitir tipos con guion bajo o espacio: "pista_deporte" o "pista deporte"
+                    if (partes.length >= 3) {
+                        // juntar resto de partes por si el tipo tiene espacios
+                        StringBuilder sb = new StringBuilder(tipoEd);
+                        for (int i = 2; i < partes.length; i++) {
+                            sb.append("_").append(partes[i]);
+                        }
+                        tipoEd = sb.toString();
+                    }
+                    // Llamamos al método existente en Casilla
+                    donde.edificar(tipoEd, actualEd);
+                } else {
+                    System.out.println("Uso: edificar <casa|hotel|piscina|pista_deporte>");
+                }
+                break;
+
             default:
                 System.out.println("Comando no reconocido");
         }
