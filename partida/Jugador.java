@@ -101,6 +101,54 @@ public class Jugador {
 
     @Override
     public String toString() {
-        return "Jugador: " + nombre + ", Fortuna: " + fortuna + ", Avatar: " + (avatar != null ? avatar.getId() : "-");
+        StringBuilder sb = new StringBuilder();
+        sb.append("{").append('\n');
+        sb.append("nombre: ").append(nombre).append(",").append('\n');
+        sb.append("avatar: ").append(avatar != null ? avatar.getId() : "-").append(",").append('\n');
+        String fortunaFmt = String.format(java.util.Locale.GERMANY, "%,d", Math.round(fortuna));
+        String gastosFmt  = String.format(java.util.Locale.GERMANY, "%,d", Math.round(gastos));
+        sb.append("fortuna: ").append(fortunaFmt).append("€").append(",").append('\n');
+        sb.append("gastos: ").append(gastosFmt).append("€").append(",").append('\n');
+
+        // Propiedades
+        sb.append("propiedades: [");
+        if (propiedades.isEmpty()) {
+            sb.append("],").append('\n');
+        } else {
+            for (int i = 0; i < propiedades.size(); i++) {
+                Casilla c = propiedades.get(i);
+                sb.append(c.getNombre());
+                if (i < propiedades.size() - 1) sb.append(", ");
+            }
+            sb.append("],").append('\n');
+        }
+
+        // Hipotecas (no implementado aún)
+        sb.append("hipotecas: -,").append('\n');
+
+        // Edificios: listados por casilla con número de cada tipo
+        sb.append("edificios: [");
+        boolean anyEd = false;
+        for (int i = 0; i < propiedades.size(); i++) {
+            Casilla c = propiedades.get(i);
+            int nc = c.getNumCasas();
+            int nh = c.getNumHoteles();
+            int np = c.getNumPiscinas();
+            int npi = c.getNumPistas();
+            if (nc + nh + np + npi > 0) {
+                if (anyEd) sb.append(", ");
+                sb.append("{casilla: ").append(c.getNombre()).append(", ");
+                sb.append("casas: ").append(nc > 0 ? String.valueOf(nc) : "-").append(", ");
+                sb.append("hoteles: ").append(nh > 0 ? String.valueOf(nh) : "-").append(", ");
+                sb.append("piscinas: ").append(np > 0 ? String.valueOf(np) : "-").append(", ");
+                sb.append("pistasDeDeporte: ").append(npi > 0 ? String.valueOf(npi) : "-").append("}");
+                anyEd = true;
+            }
+        }
+        if (!anyEd) sb.append("-");
+        sb.append("]").append('\n');
+
+        sb.append("}");
+        return sb.toString();
     }
 }
