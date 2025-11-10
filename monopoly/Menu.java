@@ -88,6 +88,8 @@ public class Menu {
                     listarAvatares();
                 } else if (partes.length >= 2 && partes[1].equalsIgnoreCase("enventa")) {
                     listarVenta();
+                } else if (partes.length >= 2 && partes[1].equalsIgnoreCase("edificios")) {
+                    listarEdificios();
                 } else {
                     System.out.println("Uso: listar jugadores | listar avatares | listar enventa");
                 }
@@ -458,6 +460,78 @@ public class Menu {
             System.out.println(a);
         }
     }
+
+    private void listarEdificios() {
+    ArrayList<String> bloques = new ArrayList<>();
+
+    for (Jugador j : jugadores) {
+        for (Casilla c : j.getPropiedades()) {
+            if (!c.getTipo().equalsIgnoreCase("Solar")) continue;
+
+            // --- CASAS ---
+            for (int i = 1; i <= c.getNumCasas(); i++) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("{\n");
+                sb.append(" id: casa-").append(i).append(",\n");
+                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
+                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
+                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
+                sb.append(" coste: ").append((int) c.getPrecioCasa()).append("\n");
+                sb.append("}");
+                bloques.add(sb.toString());
+            }
+
+            // --- HOTELES ---
+            for (int i = 1; i <= c.getNumHoteles(); i++) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("{\n");
+                sb.append(" id: hotel-").append(i).append(",\n");
+                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
+                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
+                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
+                sb.append(" coste: ").append((int) c.getPrecioHotel()).append("\n");
+                sb.append("}");
+                bloques.add(sb.toString());
+            }
+
+            // --- PISCINAS ---
+            for (int i = 1; i <= c.getNumPiscinas(); i++) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("{\n");
+                sb.append(" id: piscina-").append(i).append(",\n");
+                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
+                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
+                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
+                sb.append(" coste: ").append((int) c.getPrecioPiscina()).append("\n");
+                sb.append("}");
+                bloques.add(sb.toString());
+            }
+
+            // --- PISTAS DE DEPORTE ---
+            for (int i = 1; i <= c.getNumPistas(); i++) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("{\n");
+                sb.append(" id: pista-").append(i).append(",\n");
+                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
+                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
+                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
+                sb.append(" coste: ").append((int) c.getPrecioPistaDeporte()).append("\n");
+                sb.append("}");
+                bloques.add(sb.toString());
+            }
+        }
+    }
+
+    if (bloques.isEmpty()) {
+        System.out.println("No hay edificios construidos.");
+        return;
+    }
+
+    for (int i = 0; i < bloques.size(); i++) {
+        System.out.println(bloques.get(i) + (i < bloques.size() - 1 ? "," : ""));
+    }
+}
+
 
     // Método que realiza las acciones asociadas al comando 'acabar turno'.
     private void acabarTurno() {
