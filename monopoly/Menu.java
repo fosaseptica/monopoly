@@ -435,14 +435,20 @@ public class Menu {
 
     // Método que realiza las acciones asociadas al comando 'listar jugadores'.
     private void listarJugadores() {
-        if (jugadores.isEmpty()) {
-            System.out.println("No hay jugadores todavía.");
-            return;
-        }
-        for (Jugador j : jugadores) {
-            System.out.println(j);
-        }
+    if (jugadores.isEmpty()) {
+        System.out.println("No hay jugadores todavía.");
+        return;
     }
+
+    System.out.println("[");
+    for (int i = 0; i < jugadores.size(); i++) {
+        Jugador j = jugadores.get(i);
+        System.out.print(j.toString());
+        if (i < jugadores.size() - 1) System.out.print(",\n");
+    }
+    System.out.println("\n]");
+    }
+
 
     // Método que realiza las acciones asociadas al comando 'listar avatares'.
     private void listarAvatares() {
