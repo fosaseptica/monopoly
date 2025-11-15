@@ -206,6 +206,23 @@ public class Menu {
                 }
                 break;
 
+            case "hipotecar":
+            if (partes.length >= 2) {
+                hipotecar(partes[1]);
+            } else {
+                System.out.println("Uso: hipotecar <nombre_casilla>");
+            }
+            break;
+
+            case "deshipotecar":
+            if (partes.length >= 2) {
+                deshipotecar(partes[1]);
+            } else {
+                System.out.println("Uso: deshipotecar <nombre_casilla>");
+            }
+            break;
+
+
             default:
                 System.out.println("Comando no reconocido");
         }
@@ -489,8 +506,147 @@ public class Menu {
             sb.append("}");
             System.out.println(sb.toString() + (i < registros.size() - 1 ? "," : ""));
         }
-}
+    }
 
+    private void hipotecar(String nombreCasilla) {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores en la partida.");
+            return;
+        }
+
+        Jugador actual = jugadores.get(turno);
+        Casilla c = tablero.encontrar_casilla(nombreCasilla);
+
+        if (c == null) {
+            System.out.println("Casilla no encontrada.");
+            return;
+        }
+
+        String tipo = c.getTipo();
+
+        // Solo se hipotecan Solares, Servicios y Transportes
+        boolean hipotecable = tipo.equalsIgnoreCase("Solar") ||
+                            tipo.equalsIgnoreCase("Servicio") ||
+                            tipo.equalsIgnoreCase("Transporte");
+        if (!hipotecable) {
+            System.out.println(actual.getNombre() + " no puede hipotecar " + c.getNombre() + ". No es una propiedad hipotecable.");
+            return;
+        }
+
+        // Debe ser propietario
+        if (c.getDuenho() != actual) {
+            System.out.println(actual.getNombre() + " no puede hipotecar " + c.getNombre() + ". No es una propiedad que le pertenece.");
+            return;
+        }
+
+        // Ya hipotecada
+        if (c.getHipotecada()) {
+            System.out.println(actual.getNombre() + " no puede hipotecar " + c.getNombre() + ". Ya está hipotecada.");
+            return;
+        }
+
+        // Si es Solar, no puede tener edificios construidos
+        if (tipo.equalsIgnoreCase("Solar")) {
+            int totalEd = c.getNumCasas() + c.getNumHoteles() + c.getNumPiscinas() + c.getNumPistas();
+            if (totalEd > 0) {
+                System.out.println(actual.getNombre() + " no puede hipotecar " + c.getNombre() + ". Antes debe vender todos los edificios de esa propiedad.");
+                return;
+            }
+        }
+
+        // Ejecutar hipoteca
+        float cantidad = c.getHipoteca();
+        actual.sumarFortuna(cantidad);
+        c.setHipotecada(true);
+
+        // Mensaje similar al del enunciado
+        StringBuilder sb = new StringBuilder();
+        sb.append(actual.getNombre())
+        .append(" recibe ")
+        .append((int)cantidad).append("€ por la hipoteca de ")
+        .append(c.getNombre()).append(".");
+
+        if (tipo.equalsIgnoreCase("Solar")) {
+            String grupoColor = c.getGrupoColor();
+            sb.append(" No puede recibir alquileres");
+            if (grupoColor != null && !grupoColor.equals("-")) {
+                sb.append(" ni edificar en el grupo ").append(grupoColor.toLowerCase());
+            }
+            sb.append(".");
+        } else {
+            sb.append(" No puede recibir alquileres de esta propiedad mientras esté hipotecada.");
+        }
+
+        System.out.println(sb.toString());
+    }
+
+    private void deshipotecar(String nombreCasilla) {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores en la partida.");
+            return;
+        }
+
+        Jugador actual = jugadores.get(turno);
+        Casilla c = tablero.encontrar_casilla(nombreCasilla);
+
+        if (c == null) {
+            System.out.println("Casilla no encontrada.");
+            return;
+        }
+
+        String tipo = c.getTipo();
+
+        // Solo tiene sentido para solares, servicios y transportes
+        boolean hipotecable = tipo.equalsIgnoreCase("Solar") ||
+                            tipo.equalsIgnoreCase("Servicio") ||
+                            tipo.equalsIgnoreCase("Transporte");
+        if (!hipotecable) {
+            System.out.println(actual.getNombre() + " no puede deshipotecar " + c.getNombre() + ". No es una propiedad hipotecable.");
+            return;
+        }
+
+        // Debe ser propietario
+        if (c.getDuenho() != actual) {
+            System.out.println(actual.getNombre() + " no puede deshipotecar " + c.getNombre() + ". No es una propiedad que le pertenece.");
+            return;
+        }
+
+        // Debe estar hipotecada
+        if (!c.getHipotecada()) {
+            // OJO: el enunciado pone literalmente "no puede hipotecar" aquí
+            System.out.println(actual.getNombre() + " no puede hipotecar " + c.getNombre() + ". No está hipotecada.");
+            return;
+        }
+
+        float cantidad = c.getHipoteca();
+
+        // Comprobar que tiene dinero suficiente
+        if (actual.getFortuna() < cantidad) {
+            System.out.println(actual.getNombre() + " no puede deshipotecar " + c.getNombre() + ". No tiene suficiente dinero.");
+            return;
+        }
+
+        // Paga a la banca y se elimina la hipoteca
+        actual.pagar(cantidad, banca);
+        c.setHipotecada(false);
+
+        // Mensaje de salida según el tipo
+        if (tipo.equalsIgnoreCase("Solar")) {
+            String grupoColor = c.getGrupoColor();
+            System.out.println(
+                actual.getNombre() + " paga " +
+                (int)cantidad + "€ por deshipotecar " + c.getNombre() +
+                ". Ahora puede recibir alquileres y edificar en el grupo " +
+                (grupoColor != null ? grupoColor.toLowerCase() : "-") + "."
+            );
+        } else {
+            System.out.println(
+                actual.getNombre() + " paga " +
+                (int)cantidad + "€ por deshipotecar " + c.getNombre() +
+                ". Ahora puede recibir alquileres de esta propiedad."
+            );
+        }
+    }
 
     // Método que realiza las acciones asociadas al comando 'acabar turno'.
     private void acabarTurno() {
