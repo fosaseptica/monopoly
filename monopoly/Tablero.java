@@ -1,8 +1,8 @@
 package monopoly;
 
+import partida.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import partida.*;
 
 public class Tablero {
     //Atributos.
@@ -26,9 +26,180 @@ public class Tablero {
         this.banca = banca;
         this.posiciones = new ArrayList<>();
         this.grupos = new HashMap<>();
+        // Contadores estáticos para generar identificadores de edificios
+        // (casa-1, hotel-1, piscina-1, pista-1)
+        // Se mantienen como estáticos para que Casilla pueda solicitarlos fácilmente.
+        contadorCasa = 0;
+        contadorHotel = 0;
+        contadorPiscina = 0;
+        contadorPista = 0;
         for (int i = 0; i < 4; i++) posiciones.add(new ArrayList<>());
         generarCasillas();
         crearGrupos();
+    }
+
+    // Contadores globales para generar ids de edificios
+    private static int contadorCasa;
+    private static int contadorHotel;
+    private static int contadorPiscina;
+    private static int contadorPista;
+
+    // Registro ligero estático de edificios: cada entrada formato "id|tipo|propietario|casilla|grupo|coste"
+    private static ArrayList<String> registroEdificios;
+
+    // Generador de identificadores únicos por tipo de edificio
+    public static synchronized String generarIdEdificio(String tipo) {
+        String t = tipo.toLowerCase();
+        switch (t) {
+            case "casa":
+                contadorCasa++;
+                return "casa-" + contadorCasa;
+            case "hotel":
+                contadorHotel++;
+                return "hotel-" + contadorHotel;
+            case "piscina":
+                contadorPiscina++;
+                return "piscina-" + contadorPiscina;
+            case "pista_deporte":
+            case "pista-deporte":
+            case "pista":
+                contadorPista++;
+                return "pista-" + contadorPista;
+            default:
+                // tipo desconocido -> generar id genérico
+                return tipo + "-0";
+        }
+    }
+
+    // Inicializar registro (si aún no) - método auxiliar
+    private static synchronized void asegurarRegistroInicializado() {
+        if (registroEdificios == null) registroEdificios = new ArrayList<>();
+    }
+
+    // Registrar un edificio (formato simple) de forma atómica
+    public static synchronized void registrarEdificioStatic(String id, String tipo, String propietario, String casilla, String grupo, float coste) {
+        asegurarRegistroInicializado();
+        String linea = id + "|" + tipo + "|" + propietario + "|" + casilla + "|" + grupo + "|" + ((int)coste);
+        registroEdificios.add(linea);
+    }
+
+    // Obtener copia del registro para listado
+    public static synchronized ArrayList<String> listarEdificiosStatic() {
+        asegurarRegistroInicializado();
+        return new ArrayList<>(registroEdificios);
+    }
+
+    // Listar por grupo
+    public static synchronized ArrayList<String> listarEdificiosPorGrupoStatic(String grupo) {
+        asegurarRegistroInicializado();
+        ArrayList<String> out = new ArrayList<>();
+        for (String s : registroEdificios) {
+            String[] parts = s.split("\\|");
+            if (parts.length >= 6) {
+                String grp = parts[4];
+                if (grp.equalsIgnoreCase(grupo)) out.add(s);
+            }
+        }
+        return out;
+    }
+
+    // Buscar ids de edificios por casilla y por tipo (tipoFilter debe coincidir con el campo tipo en el registro)
+    public static synchronized ArrayList<String> buscarIdsPorCasillaYTipo(String casilla, String tipoFilter) {
+        asegurarRegistroInicializado();
+        ArrayList<String> out = new ArrayList<>();
+        for (String s : registroEdificios) {
+            String[] parts = s.split("\\|");
+            if (parts.length >= 6) {
+                String id = parts[0];
+                String tipo = parts[1];
+                String cas = parts[3];
+                if (cas.equalsIgnoreCase(casilla) && tipo.toLowerCase().contains(tipoFilter.toLowerCase())) {
+                    out.add(id);
+                }
+            }
+        }
+        return out;
+    }
+
+    // Eliminar una entrada de edificio del registro por id
+    public static synchronized boolean eliminarEdificioStatic(String id) {
+        asegurarRegistroInicializado();
+        for (int i = 0; i < registroEdificios.size(); i++) {
+            String s = registroEdificios.get(i);
+            if (s.startsWith(id + "|")) {
+                registroEdificios.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Estadísticas globales: ingresos por casilla/grupo y visitas por casilla
+    //Guardan el nombre de la casilla y el dinero total ganado
+    private java.util.HashMap<String, Float> ingresosPorCasilla = new java.util.HashMap<>(); 
+    //Guardan el nombre del grupo y el dinero total ganado
+    private java.util.HashMap<String, Float> ingresosPorGrupo = new java.util.HashMap<>();
+    //Guardan el nombre de la casilla y el número de visitas
+    private java.util.HashMap<String, Integer> visitasPorCasilla = new java.util.HashMap<>();
+
+    // Registrar ingreso (por ejemplo cobro de alquiler) asociado a una casilla
+    public synchronized void registrarIngresoPorCasilla(String casilla, float importe) {
+        if (casilla == null) return; //Si la casilla es nula, no hacemos nada
+        ingresosPorCasilla.put(casilla, ingresosPorCasilla.getOrDefault(casilla, 0f) + importe); //Se suma el importe al total de la casilla
+        // sumar también al grupo si existe
+        Casilla c = encontrar_casilla(casilla);
+        if (c != null && c.getGrupo() != null) {
+            String grp = c.getGrupoColor();
+            ingresosPorGrupo.put(grp, ingresosPorGrupo.getOrDefault(grp, 0f) + importe); //Se suma el importe al total del grupo
+        }
+    }
+
+    // Registrar visita a una casilla
+    public synchronized void registrarVisita(String casilla) {
+        if (casilla == null) return;
+        visitasPorCasilla.put(casilla, visitasPorCasilla.getOrDefault(casilla, 0) + 1);
+    }
+
+    // Getters de copia para estadísticas
+    public synchronized java.util.HashMap<String, Float> getIngresosPorCasilla() {
+        return new java.util.HashMap<>(ingresosPorCasilla); //Devuelve una copia del HashMap de ingresos por casilla
+    }
+    public synchronized java.util.HashMap<String, Float> getIngresosPorGrupo() {
+        return new java.util.HashMap<>(ingresosPorGrupo); //Devuelve una copia del HashMap de ingresos por grupo
+    }
+    public synchronized java.util.HashMap<String, Integer> getVisitasPorCasilla() {
+        return new java.util.HashMap<>(visitasPorCasilla); //Devuelve una copia del HashMap de visitas por casilla
+    }
+
+    // Utilidades para estadísticas
+    // Obtener la casilla con mayores ingresos, va iterando el HashMap comparando valores
+    public String getCasillaMasRentable() {
+        if (ingresosPorCasilla.isEmpty()) return "-";
+        String best = null; float bestVal = -1f;
+        for (java.util.Map.Entry<String, Float> e : ingresosPorCasilla.entrySet()) {
+            if (e.getValue() > bestVal) { bestVal = e.getValue(); best = e.getKey(); }
+        }
+        return best != null ? best : "-";
+    }
+
+    // Obtener el grupo con mayores ingresos, va iterando el HashMap comparando valores
+    public String getGrupoMasRentable() {
+        if (ingresosPorGrupo.isEmpty()) return "-";
+        String best = null; float bestVal = -1f;
+        for (java.util.Map.Entry<String, Float> e : ingresosPorGrupo.entrySet()) {
+            if (e.getValue() > bestVal) { bestVal = e.getValue(); best = e.getKey(); }
+        }
+        return best != null ? best : "-";
+    }
+
+    // Obtener la casilla más frecuentada, va iterando el HashMap comparando valores
+    public String getCasillaMasFrecuentada() {
+        if (visitasPorCasilla.isEmpty()) return "-";
+        String best = null; int bestVal = -1;
+        for (java.util.Map.Entry<String, Integer> e : visitasPorCasilla.entrySet()) {
+            if (e.getValue() > bestVal) { bestVal = e.getValue(); best = e.getKey(); }
+        }
+        return best != null ? best : "-";
     }
 
     //Método para crear todas las casillas del tablero. Formado a su vez por cuatro métodos (1/lado).
@@ -99,7 +270,7 @@ public class Tablero {
         este.add(new Casilla("Solar22", 39, 4000000f, 2000000f, 2000000f, 2000000f, 400000f, 800000f, banca));
     }
 
-    private void crearGrupos() {
+        private void crearGrupos() {
         Grupo marron = new Grupo(encontrar_casilla("Solar1"), encontrar_casilla("Solar2"), "Marrón");
         Grupo cian   = new Grupo(encontrar_casilla("Solar3"), encontrar_casilla("Solar4"), encontrar_casilla("Solar5"), "Cian");
         Grupo rosa   = new Grupo(encontrar_casilla("Solar6"), encontrar_casilla("Solar7"), "Rosa");
@@ -137,31 +308,30 @@ public class Tablero {
         ArrayList<Casilla> este  = posiciones.get(3);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("┌────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┐\n");
+        sb.append("┌─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┐\n");
         sb.append("│");
         for (Casilla c : norte) sb.append(formatearCasilla(c)).append("│");
         sb.append("\n");
 
         for (int i = 0; i < 9; i++) {
-            sb.append("├────────────┤                                                                                                                    ├────────────┤\n");
+            sb.append("├─────────┤                                                                                         ├─────────┤\n");
             sb.append("│");
             int idxOeste = oeste.size() - 1 - i;
             sb.append(formatearCasilla(oeste.get(idxOeste)));
             sb.append("│");
-            sb.append("                                                                                                                    ");
+            sb.append("                                                                                         ");
             sb.append("│");
             sb.append(formatearCasilla(este.get(i)));
             sb.append("│\n");
         }
 
-        sb.append("├────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┤\n");
+        sb.append("├─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┤\n");
         sb.append("│");
         for (int i = sur.size() - 1; i >= 0; i--) sb.append(formatearCasilla(sur.get(i))).append("│");
         sb.append("\n");
-        sb.append("└────────────┴────────────┴────────────┴────────────┴────────────┴────────────┴────────────┴────────────┴────────────┴────────────┴────────────┘\n");
+        sb.append("└─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘\n");
         return sb.toString();
     }
-
     
     //Método usado para buscar la casilla con el nombre pasado como argumento:
     public Casilla encontrar_casilla(String nombre){
@@ -176,16 +346,16 @@ public class Tablero {
         String nombre = c.getNombre();  // p.ej. "Solar12"
         String texto  = nombre;
 
-        // Añadir TODOS los avatares con & antes de cada uno
+        // Añadir avatares si los hay (p.ej. "Solar9 &H")
         if (!c.getAvatares().isEmpty()) {
-            for (Avatar a : c.getAvatares()) {
-                texto += " &" + a.getId();
-            }
+            StringBuilder s = new StringBuilder(nombre).append(" &");
+            for (Avatar a : c.getAvatares()) s.append(a.getId());
+            texto = s.toString();
         }
 
-        // Recortar a 12 y padear a 12 para el dibujo
-        if (texto.length() >12 ) texto = texto.substring(0, 12);
-        String padded = String.format("%-12s", texto);
+        // Recortar a 9 y padear a 9 para el dibujo
+        if (texto.length() > 9) texto = texto.substring(0, 9);
+        String padded = String.format("%-9s", texto);
 
         // Aplicar color/estilo SOLO al nombre de solares, sin romper el ancho de celda
         if ("Solar".equalsIgnoreCase(c.getTipo())) {
