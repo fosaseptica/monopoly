@@ -230,7 +230,20 @@ public class Casilla {
             return;
         }
 
+        // Validar que el jugador es el propietario de la casilla
+        if (this.duenho != jugador) {
+            System.out.println(jugador.getNombre() + " no puede edificar en " + nombre + ". No es una propiedad que le pertenece.");
+            return;
+        }
+
+        // Validar monopolio del grupo si procede (no se permite edificar si no se posee todo el grupo)
+        if (this.grupo != null && !this.grupo.esDuenhoGrupo(jugador)) {
+            System.out.println("No se puede edificar en " + nombre + ", porque no se posee el monopolio del grupo " + nombreGrupo() + ".");
+            return;
+        }
+
         float coste = 0;
+        String idEdificio = "";
 
         switch (tipoEdificio.toLowerCase()) {
             case "casa":
@@ -238,8 +251,10 @@ public class Casilla {
                     System.out.println("No se pueden construir más casas en esta casilla.");
                     return;
                 }
-                coste = valor * 0.6f;
+                // usar precio específico si está definido
+                coste = this.precioCasa > 0 ? this.precioCasa : (valor * 0.6f);
                 numCasas++;
+                idEdificio = monopoly.Tablero.generarIdEdificio("casa");
                 break;
 
             case "hotel":
@@ -251,8 +266,9 @@ public class Casilla {
                     System.out.println("Ya hay un hotel en esta casilla.");
                     return;
                 }
-                coste = valor * 0.6f;
+                coste = this.precioHotel > 0 ? this.precioHotel : (valor * 0.6f);
                 numHoteles++;
+                idEdificio = monopoly.Tablero.generarIdEdificio("hotel");
                 break;
 
             case "piscina":
@@ -264,11 +280,14 @@ public class Casilla {
                     System.out.println("Ya existe una piscina en esta casilla.");
                     return;
                 }
-                coste = valor * 0.4f;
+                coste = this.precioPiscina > 0 ? this.precioPiscina : (valor * 0.4f);
                 numPiscinas++;
+                idEdificio = monopoly.Tablero.generarIdEdificio("piscina");
                 break;
 
             case "pista_deporte":
+            case "pista-deporte":
+            case "pista":
                 if (numHoteles < 1) {
                     System.out.println("Debe existir un hotel antes de construir una pista de deporte.");
                     return;
@@ -277,8 +296,9 @@ public class Casilla {
                     System.out.println("Ya hay una pista de deporte en esta casilla.");
                     return;
                 }
-                coste = valor * 0.8f;
+                coste = this.precioPistaDeporte > 0 ? this.precioPistaDeporte : (valor * 0.8f);
                 numPistas++;
+                idEdificio = monopoly.Tablero.generarIdEdificio("pista_deporte");
                 break;
 
             default:
@@ -289,6 +309,11 @@ public class Casilla {
         // Comprobamos si el jugador tiene dinero
         if (jugador.getFortuna() < coste) {
             System.out.println("La fortuna de " + jugador.getNombre() + " no es suficiente para edificar " + tipoEdificio + " en " + nombre + ".");
+            // revertir contador local incrementado por seguridad
+            if (tipoEdificio.equalsIgnoreCase("casa") && numCasas > 0) numCasas--;
+            if (tipoEdificio.equalsIgnoreCase("hotel") && numHoteles > 0) numHoteles--;
+            if (tipoEdificio.equalsIgnoreCase("piscina") && numPiscinas > 0) numPiscinas--;
+            if (tipoEdificio.toLowerCase().startsWith("pista") && numPistas > 0) numPistas--;
             return;
         }
 
@@ -296,7 +321,12 @@ public class Casilla {
         jugador.sumarFortuna(-coste);
         jugador.sumarGastos(coste);
 
-        System.out.println("Se ha edificado una " + tipoEdificio + " en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
+        // Mensaje con id generado
+        if (idEdificio.isEmpty()) {
+            System.out.println("Se ha edificado una " + tipoEdificio + " en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
+        } else {
+            System.out.println("Se ha edificado una " + tipoEdificio + " (id: " + idEdificio + ") en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
+        }
 }
 
 
