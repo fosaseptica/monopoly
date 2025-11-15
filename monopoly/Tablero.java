@@ -26,9 +26,46 @@ public class Tablero {
         this.banca = banca;
         this.posiciones = new ArrayList<>();
         this.grupos = new HashMap<>();
+        // Contadores estáticos para generar identificadores de edificios
+        // (casa-1, hotel-1, piscina-1, pista-1)
+        // Se mantienen como estáticos para que Casilla pueda solicitarlos fácilmente.
+        contadorCasa = 0;
+        contadorHotel = 0;
+        contadorPiscina = 0;
+        contadorPista = 0;
         for (int i = 0; i < 4; i++) posiciones.add(new ArrayList<>());
         generarCasillas();
         crearGrupos();
+    }
+
+    // Contadores globales para generar ids de edificios
+    private static int contadorCasa;
+    private static int contadorHotel;
+    private static int contadorPiscina;
+    private static int contadorPista;
+
+    // Generador de identificadores únicos por tipo de edificio
+    public static synchronized String generarIdEdificio(String tipo) {
+        String t = tipo.toLowerCase();
+        switch (t) {
+            case "casa":
+                contadorCasa++;
+                return "casa-" + contadorCasa;
+            case "hotel":
+                contadorHotel++;
+                return "hotel-" + contadorHotel;
+            case "piscina":
+                contadorPiscina++;
+                return "piscina-" + contadorPiscina;
+            case "pista_deporte":
+            case "pista-deporte":
+            case "pista":
+                contadorPista++;
+                return "pista-" + contadorPista;
+            default:
+                // tipo desconocido -> generar id genérico
+                return tipo + "-0";
+        }
     }
 
     //Método para crear todas las casillas del tablero. Formado a su vez por cuatro métodos (1/lado).
