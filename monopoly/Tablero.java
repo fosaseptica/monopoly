@@ -103,6 +103,37 @@ public class Tablero {
         return out;
     }
 
+    // Buscar ids de edificios por casilla y por tipo (tipoFilter debe coincidir con el campo tipo en el registro)
+    public static synchronized ArrayList<String> buscarIdsPorCasillaYTipo(String casilla, String tipoFilter) {
+        asegurarRegistroInicializado();
+        ArrayList<String> out = new ArrayList<>();
+        for (String s : registroEdificios) {
+            String[] parts = s.split("\\|");
+            if (parts.length >= 6) {
+                String id = parts[0];
+                String tipo = parts[1];
+                String cas = parts[3];
+                if (cas.equalsIgnoreCase(casilla) && tipo.toLowerCase().contains(tipoFilter.toLowerCase())) {
+                    out.add(id);
+                }
+            }
+        }
+        return out;
+    }
+
+    // Eliminar una entrada de edificio del registro por id
+    public static synchronized boolean eliminarEdificioStatic(String id) {
+        asegurarRegistroInicializado();
+        for (int i = 0; i < registroEdificios.size(); i++) {
+            String s = registroEdificios.get(i);
+            if (s.startsWith(id + "|")) {
+                registroEdificios.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
     //Método para crear todas las casillas del tablero. Formado a su vez por cuatro métodos (1/lado).
     private void generarCasillas() {
         this.insertarLadoSur();
