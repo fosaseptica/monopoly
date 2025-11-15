@@ -393,6 +393,13 @@ public class Casilla {
         numPistas = Math.max(0, numPistas - n);
     }
 
+    // Getter público que devuelve el alquiler actual según el estado de la casilla
+    public float getAlquilerActual() {
+        int n = numeroSolar();
+        return alquilerTotal(n);
+    }
+
+
 
     // Determina el número de Solar (SolarX -> X), o -1 si no es solar
     private int numeroSolar() {
@@ -401,8 +408,6 @@ public class Casilla {
         if (d.isEmpty()) return -1;
         return Integer.parseInt(d);
     }
-
-    
 
     // Nombre del grupo (color) por rango de SolarX 
     private String nombreGrupo() {
