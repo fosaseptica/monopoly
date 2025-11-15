@@ -100,6 +100,16 @@ public class Grupo {
         for (Casilla c : miembros) sb.append(c.getNombre()).append(" ");
         return sb.toString();
     }
+
+    public boolean hayHipotecasEnGrupo() {
+    for (Casilla c : miembros) {
+        if (c.getHipotecada()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 }
 
 /* necesario esto en Casilla
