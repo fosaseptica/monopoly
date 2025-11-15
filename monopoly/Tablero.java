@@ -44,6 +44,9 @@ public class Tablero {
     private static int contadorPiscina;
     private static int contadorPista;
 
+    // Registro ligero estático de edificios: cada entrada formato "id|tipo|propietario|casilla|grupo|coste"
+    private static ArrayList<String> registroEdificios;
+
     // Generador de identificadores únicos por tipo de edificio
     public static synchronized String generarIdEdificio(String tipo) {
         String t = tipo.toLowerCase();
@@ -66,6 +69,38 @@ public class Tablero {
                 // tipo desconocido -> generar id genérico
                 return tipo + "-0";
         }
+    }
+
+    // Inicializar registro (si aún no) - método auxiliar
+    private static synchronized void asegurarRegistroInicializado() {
+        if (registroEdificios == null) registroEdificios = new ArrayList<>();
+    }
+
+    // Registrar un edificio (formato simple) de forma atómica
+    public static synchronized void registrarEdificioStatic(String id, String tipo, String propietario, String casilla, String grupo, float coste) {
+        asegurarRegistroInicializado();
+        String linea = id + "|" + tipo + "|" + propietario + "|" + casilla + "|" + grupo + "|" + ((int)coste);
+        registroEdificios.add(linea);
+    }
+
+    // Obtener copia del registro para listado
+    public static synchronized ArrayList<String> listarEdificiosStatic() {
+        asegurarRegistroInicializado();
+        return new ArrayList<>(registroEdificios);
+    }
+
+    // Listar por grupo
+    public static synchronized ArrayList<String> listarEdificiosPorGrupoStatic(String grupo) {
+        asegurarRegistroInicializado();
+        ArrayList<String> out = new ArrayList<>();
+        for (String s : registroEdificios) {
+            String[] parts = s.split("\\|");
+            if (parts.length >= 6) {
+                String grp = parts[4];
+                if (grp.equalsIgnoreCase(grupo)) out.add(s);
+            }
+        }
+        return out;
     }
 
     //Método para crear todas las casillas del tablero. Formado a su vez por cuatro métodos (1/lado).
