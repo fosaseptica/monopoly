@@ -462,74 +462,33 @@ public class Menu {
     }
 
     private void listarEdificios() {
-    ArrayList<String> bloques = new ArrayList<>();
-
-    for (Jugador j : jugadores) {
-        for (Casilla c : j.getPropiedades()) {
-            if (!c.getTipo().equalsIgnoreCase("Solar")) continue;
-
-            // --- CASAS ---
-            for (int i = 1; i <= c.getNumCasas(); i++) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("{\n");
-                sb.append(" id: casa-").append(i).append(",\n");
-                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
-                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
-                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
-                sb.append(" coste: ").append((int) c.getPrecioCasa()).append("\n");
-                sb.append("}");
-                bloques.add(sb.toString());
-            }
-
-            // --- HOTELES ---
-            for (int i = 1; i <= c.getNumHoteles(); i++) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("{\n");
-                sb.append(" id: hotel-").append(i).append(",\n");
-                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
-                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
-                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
-                sb.append(" coste: ").append((int) c.getPrecioHotel()).append("\n");
-                sb.append("}");
-                bloques.add(sb.toString());
-            }
-
-            // --- PISCINAS ---
-            for (int i = 1; i <= c.getNumPiscinas(); i++) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("{\n");
-                sb.append(" id: piscina-").append(i).append(",\n");
-                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
-                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
-                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
-                sb.append(" coste: ").append((int) c.getPrecioPiscina()).append("\n");
-                sb.append("}");
-                bloques.add(sb.toString());
-            }
-
-            // --- PISTAS DE DEPORTE ---
-            for (int i = 1; i <= c.getNumPistas(); i++) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("{\n");
-                sb.append(" id: pista-").append(i).append(",\n");
-                sb.append(" propietario: ").append(j.getNombre()).append(",\n");
-                sb.append(" casilla: ").append(c.getNombre()).append(",\n");
-                sb.append(" grupo: ").append(c.getGrupoColor()).append(",\n");
-                sb.append(" coste: ").append((int) c.getPrecioPistaDeporte()).append("\n");
-                sb.append("}");
-                bloques.add(sb.toString());
-            }
+        ArrayList<String> registros = monopoly.Tablero.listarEdificiosStatic();
+        if (registros.isEmpty()) {
+            System.out.println("No hay edificios construidos.");
+            return;
         }
-    }
 
-    if (bloques.isEmpty()) {
-        System.out.println("No hay edificios construidos.");
-        return;
-    }
+        for (int i = 0; i < registros.size(); i++) {
+            String r = registros.get(i);
+            // formato: id|tipo|propietario|casilla|grupo|coste
+            String[] p = r.split("\\|");
+            if (p.length < 6) continue;
+            String id = p[0];
+            String propietario = p[2];
+            String casilla = p[3];
+            String grupo = p[4];
+            String coste = p[5];
 
-    for (int i = 0; i < bloques.size(); i++) {
-        System.out.println(bloques.get(i) + (i < bloques.size() - 1 ? "," : ""));
-    }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\n");
+            sb.append(" id: ").append(id).append(",\n");
+            sb.append(" propietario: ").append(propietario).append(",\n");
+            sb.append(" casilla: ").append(casilla).append(",\n");
+            sb.append(" grupo: ").append(grupo).append("\n");
+            sb.append(" coste: ").append(coste).append("\n");
+            sb.append("}");
+            System.out.println(sb.toString() + (i < registros.size() - 1 ? "," : ""));
+        }
 }
 
 
