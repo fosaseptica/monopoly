@@ -325,6 +325,9 @@ public class Casilla {
         if (idEdificio.isEmpty()) {
             System.out.println("Se ha edificado una " + tipoEdificio + " en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
         } else {
+            // Registrar el edificio en el registro global (Tablero) y en el jugador
+            monopoly.Tablero.registrarEdificioStatic(idEdificio, tipoEdificio, jugador.getNombre(), nombre, nombreGrupo(), coste);
+            jugador.anhadirEdificio(idEdificio);
             System.out.println("Se ha edificado una " + tipoEdificio + " (id: " + idEdificio + ") en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
         }
 }
