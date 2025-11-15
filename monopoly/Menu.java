@@ -221,6 +221,20 @@ public class Menu {
                 System.out.println("Uso: deshipotecar <nombre_casilla>");
             }
             break;
+            case "vender":
+            if (partes.length >= 4) {
+                String tipoEdificio = partes[1];   // casas / hoteles / piscina / pistas...
+                String nombreCasilla = partes[2];  // Solar5, Solar21, ...
+                try {
+                    int cantidad = Integer.parseInt(partes[3]);
+                    venderEdificios(tipoEdificio, nombreCasilla, cantidad);
+                } catch (NumberFormatException e) {
+                    System.out.println("La cantidad a vender debe ser un número entero.");
+                }
+            } else {
+                System.out.println("Uso: vender <casa/s|hotel/es|piscina/s|pista/s> <nombre_casilla> <cantidad>");
+            }
+            break;
 
 
             default:
@@ -647,6 +661,180 @@ public class Menu {
             );
         }
     }
+
+    private void venderEdificios(String tipoArgumento, String nombreCasilla, int cantidad) {
+        if (jugadores.isEmpty()) {
+            System.out.println("No hay jugadores en la partida.");
+            return;
+        }
+        if (cantidad <= 0) {
+            System.out.println("La cantidad a vender debe ser mayor que 0.");
+            return;
+        }
+
+        Jugador actual = jugadores.get(turno);
+        Casilla c = tablero.encontrar_casilla(nombreCasilla);
+
+        if (c == null) {
+            System.out.println("Casilla no encontrada.");
+            return;
+        }
+
+        // Solo solares pueden tener edificios
+        if (!c.getTipo().equalsIgnoreCase("Solar")) {
+            System.out.println("No se pueden vender edificios en " + c.getNombre() + ". Solo se pueden vender edificios en propiedades de tipo Solar.");
+            return;
+        }
+
+        // Debe ser propietario
+        if (c.getDuenho() != actual) {
+            String plural = normalizarPlural(tipoArgumento);
+            System.out.println("No se pueden vender " + plural + " en " + c.getNombre() + ". Esta propiedad no pertenece a " + actual.getNombre() + ".");
+            return;
+        }
+
+        // Mapear tipo argumento -> tipo interno y nombres para mensajes
+        String tipo = tipoArgumento.toLowerCase();
+        String tipoInterno;
+        String singular;
+        String plural;
+
+        switch (tipo) {
+            case "casa":
+            case "casas":
+                tipoInterno = "casa";
+                singular = "casa";
+                plural = "casas";
+                break;
+            case "hotel":
+            case "hoteles":
+                tipoInterno = "hotel";
+                singular = "hotel";
+                plural = "hoteles";
+                break;
+            case "piscina":
+            case "piscinas":
+                tipoInterno = "piscina";
+                singular = "piscina";
+                plural = "piscinas";
+                break;
+            case "pista":
+            case "pistas":
+                tipoInterno = "pista_deporte";
+                singular = "pista de deporte";
+                plural = "pistas de deporte";
+                break;
+            default:
+                System.out.println("Tipo de edificio no válido. Use casa/s, hotel/es, piscina/s o pista/s.");
+                return;
+        }
+
+        int disponibles;
+        float precioUnit;
+
+        switch (tipoInterno) {
+            case "casa":
+                disponibles = c.getNumCasas();
+                precioUnit = c.getPrecioCasa();
+                break;
+            case "hotel":
+                disponibles = c.getNumHoteles();
+                precioUnit = c.getPrecioHotel();
+                break;
+            case "piscina":
+                disponibles = c.getNumPiscinas();
+                precioUnit = c.getPrecioPiscina();
+                break;
+            case "pista_deporte":
+                disponibles = c.getNumPistas();
+                precioUnit = c.getPrecioPistaDeporte();
+                break;
+            default:
+                // No debería llegar aquí
+                return;
+        }
+
+        if (disponibles == 0) {
+            System.out.println("No se pueden vender " + plural + " en " + c.getNombre() + ". No hay " + plural + " construidas en esta propiedad.");
+            return;
+        }
+
+        int aVender = Math.min(cantidad, disponibles);
+        float ingreso = aVender * precioUnit;
+
+        // Actualizar contador de edificios
+        switch (tipoInterno) {
+            case "casa":
+                c.reducirCasas(aVender);
+                break;
+            case "hotel":
+                c.reducirHoteles(aVender);
+                break;
+            case "piscina":
+                c.reducirPiscinas(aVender);
+                break;
+            case "pista_deporte":
+                c.reducirPistas(aVender);
+                break;
+        }
+
+        // El jugador recibe el dinero
+        actual.sumarFortuna(ingreso);
+
+        // Mensajes según casos
+
+        // Caso: intenta vender más de los que hay (ejemplo piscina)
+        if (aVender < cantidad) {
+            System.out.println("Solamente se puede vender " + aVender + " " +
+                    (aVender == 1 ? singular : plural) +
+                    ", recibiendo " + (int) ingreso + "€.");
+            return;
+        }
+
+        // Caso normal: vende exactamente lo pedido
+        int restantes = disponibles - aVender;
+
+        // Ejemplo del enunciado menciona las casas que quedan
+        if (tipoInterno.equals("casa")) {
+            System.out.println(
+                actual.getNombre() + " ha vendido " + aVender + " " +
+                (aVender == 1 ? "casa" : "casas") + " en " + c.getNombre() +
+                ", recibiendo " + (int) ingreso + "€. En la propiedad " +
+                (restantes == 1
+                    ? "queda 1 casa."
+                    : "quedan " + restantes + " casas.")
+            );
+        } else {
+            // Para hoteles, piscina, pistas no es obligatorio mencionar restantes
+            System.out.println(
+                actual.getNombre() + " ha vendido " + aVender + " " +
+                (aVender == 1 ? singular : plural) + " en " + c.getNombre() +
+                ", recibiendo " + (int) ingreso + "€."
+            );
+        }
+    }
+
+    // Pequeño helper para el mensaje de "no se pueden vender ... en ..."
+    private String normalizarPlural(String tipoArgumento) {
+        String t = tipoArgumento.toLowerCase();
+        switch (t) {
+            case "casa":
+                return "casas";
+            case "hotel":
+                return "hoteles";
+            case "piscina":
+                return "piscinas";
+            case "pista":
+                return "pistas de deporte";
+            case "pistas":
+            case "pistasdedeporte":
+            case "pistadedeporte":
+                return "pistas de deporte";
+            default:
+                return t; // tal cual lo escribió el usuario
+        }
+    }
+
 
     // Método que realiza las acciones asociadas al comando 'acabar turno'.
     private void acabarTurno() {
