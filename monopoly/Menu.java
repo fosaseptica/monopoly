@@ -2,6 +2,8 @@ package monopoly;
 
 import partida.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -89,7 +91,11 @@ public class Menu {
                 } else if (partes.length >= 2 && partes[1].equalsIgnoreCase("enventa")) {
                     listarVenta();
                 } else if (partes.length >= 2 && partes[1].equalsIgnoreCase("edificios")) {
-                    listarEdificios();
+                    if (partes.length >= 3) {
+                        listarEdificiosPorGrupo(partes[2]);
+                    } else {
+                        listarEdificios();
+                    }
                 } else {
                     System.out.println("Uso: listar jugadores | listar avatares | listar enventa");
                 }
@@ -522,6 +528,146 @@ public class Menu {
         }
     }
 
+    // Listar edificios por grupo (por ejemplo: listar edificios azul)
+    private void listarEdificiosPorGrupo(String grupoInput) {
+        if (grupoInput == null || grupoInput.isEmpty()) {
+            System.out.println("Uso: listar edificios <grupo>");
+            return;
+        }
+
+        // Obtener registros del tablero por grupo 
+        ArrayList<String> registros = monopoly.Tablero.listarEdificiosPorGrupoStatic(grupoInput);
+
+        // Mapas por casilla (los maps son de tipo casilla -> lista de ids de edificios)
+        Map<String, ArrayList<String>> casas = new HashMap<>();
+        Map<String, ArrayList<String>> hoteles = new HashMap<>();
+        Map<String, ArrayList<String>> piscinas = new HashMap<>();
+        Map<String, ArrayList<String>> pistas = new HashMap<>();
+
+        //Rellena los mapas
+        for (String r : registros) {
+            String[] p = r.split("\\|"); //coge los datos del registro separados por |
+            if (p.length < 6) continue; //se asegura de que el registro es válido (6 elementos)
+            String id = p[0]; //id del edificio
+            String tipo = p[1].toLowerCase(); //tipo de edificio
+            String casilla = p[3]; //nombre de la casilla
+            if (tipo.contains("casa")) { //si es casa
+                casas.computeIfAbsent(casilla, k -> new ArrayList<>()).add(id); //la añade al mapa de casa
+            } else if (tipo.contains("hotel")) { //si es hotel
+                hoteles.computeIfAbsent(casilla, k -> new ArrayList<>()).add(id); //la añade al mapa de hoteles
+            } else if (tipo.contains("piscina")) { //si es piscina
+                piscinas.computeIfAbsent(casilla, k -> new ArrayList<>()).add(id); //la añade al mapa de piscinas
+            } else if (tipo.contains("pista")) { //si es pista de deporte
+                pistas.computeIfAbsent(casilla, k -> new ArrayList<>()).add(id); //la añade al mapa de pistas de deporte
+            }
+        }
+
+        // Recuperar casillas del grupo desde el tablero, es decir sirve para encontrar todas las casillas que pertenecen al grupo indicado
+        ArrayList<Casilla> miembros = new ArrayList<>();
+        for (ArrayList<Casilla> lado : tablero.getCasillas()) { // recorre cada lado del tablero
+            for (Casilla c : lado) { // recorre cada casilla del lado
+                // Si es solar y del grupo indicado
+                if ("Solar".equalsIgnoreCase(c.getTipo()) && c.getGrupoColor() != null && c.getGrupoColor().equalsIgnoreCase(grupoInput)) {
+                    miembros.add(c); // la añade a la lista de miembros
+                }
+            }
+        }
+
+        /*El mapa nos sirve para saber que edificaciones hay en cada casilla del grupo, y el array list miembros
+         * nos sirve para saber qué casillas pertenecen al grupo indicado. Miembros nos dice que casillas imprimir
+         * y los mapas nos dice que edificios tiene cada una.*/
+
+        // Si no hay miembros en el grupo
+        if (miembros.isEmpty()) {
+            System.out.println("No hay propiedades en el grupo " + grupoInput + ".");
+            return;
+        }
+
+        // Imprimir cada propiedad del grupo con sus edificaciones
+        for (int i = 0; i < miembros.size(); i++) {
+            Casilla c = miembros.get(i); // casilla actual
+            String prop = c.getNombre(); // nombre de la propiedad
+            String hotelesStr = listOrDash(hoteles.get(prop)); // obtiene lista de hoteles o "-"
+            String casasStr = listOrDash(casas.get(prop)); // obtiene lista de casas o "-"
+            String piscinasStr = listOrDash(piscinas.get(prop)); // obtiene lista de piscinas o "-"
+            String pistasStr = listOrDash(pistas.get(prop)); // obtiene lista de pistas de deporte o "-"
+            int alquiler = (int) c.getAlquilerActual(); // alquiler actual de la propiedad
+
+            StringBuilder sb = new StringBuilder(); // construimos la salida
+            sb.append("{\n");
+            sb.append("propiedad: ").append(prop).append(",\n");
+            sb.append("hoteles: ").append(hotelesStr).append("\n");
+            sb.append("casas: ").append(casasStr).append(",\n");
+            sb.append("piscinas: ").append(piscinasStr).append(",\n");
+            sb.append("pistasDeDeporte: ").append(pistasStr).append(",\n");
+            sb.append("alquiler: ").append(alquiler).append("\n");
+            sb.append("}");
+
+            System.out.println(sb.toString() + (i < miembros.size() - 1 ? "," : ""));
+        }
+
+        // Determinar qué se puede edificar en el grupo
+        Grupo grupoObj = miembros.get(0).getGrupo(); 
+        Jugador posibleDueno = miembros.get(0).getDuenho();
+        boolean hayMonopolio = grupoObj != null && posibleDueno != null && grupoObj.esDuenhoGrupo(posibleDueno);
+
+        // Verificar si hay monopolio
+        if (!hayMonopolio) {
+            System.out.println("No hay monopolio en el grupo. No se puede edificar en este grupo.");
+            return;
+        }
+
+        // Verificar si hay hipotecas en el grupo
+        if (grupoObj.hayHipotecasEnGrupo()) {
+            System.out.println("No se puede edificar en el grupo " + grupoInput + " porque hay propiedades hipotecadas en él.");
+            return;
+        }
+
+        // Verificar qué se puede edificar
+        boolean canHouse = false, canHotel = false, canPiscina = false, canPista = false;
+        for (Casilla c : miembros) {
+            if (c.getHipotecada()) continue; // no se puede edificar en casillas hipotecadas
+            if (c.getNumCasas() < 4 && c.getNumHoteles() == 0) canHouse = true; // puede edificar casa
+            if (c.getNumCasas() == 4 && c.getNumHoteles() == 0) canHotel = true; // puede edificar hotel
+            if (c.getNumHoteles() >= 1 && c.getNumPiscinas() == 0) canPiscina = true; // puede edificar piscina
+            if (c.getNumHoteles() >= 1 && c.getNumPistas() == 0) canPista = true; // puede edificar pista de deporte
+        }
+
+        // Mostrar resultados
+        ArrayList<String> allowed = new ArrayList<>();
+        ArrayList<String> disallowed = new ArrayList<>();
+        //Se añaden a la lista "allowed" los tipos de edificaciones que se pueden edificar y a la lista "disallowed" los que no se pueden edificar.
+        if (canHouse) allowed.add("casas"); else disallowed.add("casas");
+        if (canHotel) allowed.add("hoteles"); else disallowed.add("hoteles");
+        if (canPiscina) allowed.add("piscinas"); else disallowed.add("piscinas");
+        if (canPista) allowed.add("pistas de deporte"); else disallowed.add("pistas de deporte");
+
+        //Se imprimen los de la lista "allowed" y los de la lista "disallowed".
+        if (!allowed.isEmpty()) {
+            System.out.println("Aún se puede edificar " + joinList(allowed) + ".");
+        }
+        if (!disallowed.isEmpty()) {
+            System.out.println("Ya no se pueden construir ni " + String.join(" ni ", disallowed) + ".");
+        }
+    }
+
+    private String listOrDash(ArrayList<String> list) {
+        if (list == null || list.isEmpty()) return "-";
+        return "[" + String.join(",", list) + "]";
+    }
+
+    private String joinList(ArrayList<String> l) {
+        if (l == null || l.isEmpty()) return "-";
+        if (l.size() == 1) return l.get(0);
+        if (l.size() == 2) return l.get(0) + " y " + l.get(1);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < l.size(); i++) {
+            if (i > 0) sb.append(i == l.size()-1 ? " y " : ", ");
+            sb.append(l.get(i));
+        }
+        return sb.toString();
+    }
+
     private void hipotecar(String nombreCasilla) {
         if (jugadores.isEmpty()) {
             System.out.println("No hay jugadores en la partida.");
@@ -750,7 +896,7 @@ public class Menu {
                 precioUnit = c.getPrecioPistaDeporte();
                 break;
             default:
-                // No debería llegar aquí
+            //NO debería llegar aquí
                 return;
         }
 
@@ -780,6 +926,18 @@ public class Menu {
 
         // El jugador recibe el dinero
         actual.sumarFortuna(ingreso);
+
+        // Además: eliminar registros de edificios del registro global y de la lista del jugador
+        ArrayList<String> ids = monopoly.Tablero.buscarIdsPorCasillaYTipo(c.getNombre(), tipoInterno);
+        int eliminados = 0;
+        for (String id : ids) {
+            if (eliminados >= aVender) break;
+            boolean removed = monopoly.Tablero.eliminarEdificioStatic(id);
+            if (removed) {
+                actual.eliminarEdificio(id);
+                eliminados++;
+            }
+        }
 
         // Mensajes según casos
 
@@ -834,7 +992,6 @@ public class Menu {
                 return t; // tal cual lo escribió el usuario
         }
     }
-
 
     // Método que realiza las acciones asociadas al comando 'acabar turno'.
     private void acabarTurno() {
