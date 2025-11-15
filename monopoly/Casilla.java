@@ -373,6 +373,25 @@ public class Casilla {
         this.hipotecada = hipotecada; 
     }
 
+    public void reducirCasas(int n) {
+        if (n <= 0) return;
+        numCasas = Math.max(0, numCasas - n);
+    }
+
+    public void reducirHoteles(int n) {
+        if (n <= 0) return;
+        numHoteles = Math.max(0, numHoteles - n);
+    }
+
+    public void reducirPiscinas(int n) {
+        if (n <= 0) return;
+        numPiscinas = Math.max(0, numPiscinas - n);
+    }
+
+    public void reducirPistas(int n) {
+        if (n <= 0) return;
+        numPistas = Math.max(0, numPistas - n);
+    }
 
 
     // Determina el número de Solar (SolarX -> X), o -1 si no es solar
@@ -382,6 +401,8 @@ public class Casilla {
         if (d.isEmpty()) return -1;
         return Integer.parseInt(d);
     }
+
+    
 
     // Nombre del grupo (color) por rango de SolarX 
     private String nombreGrupo() {
