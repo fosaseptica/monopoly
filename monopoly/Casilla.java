@@ -14,6 +14,7 @@ public class Casilla {
     private Grupo grupo; //Grupo al que pertenece la casilla (si es solar).
     private float impuesto; //Cantidad a pagar por caer en la casilla: el alquiler en solares/servicios/transportes o impuestos.
     private float hipoteca; //Valor otorgado por hipotecar una casilla
+    private boolean hipotecada = false; // Indica si la casilla está hipotecada
     private float precioCasa; //Precio para construir una casa
     private float precioHotel; //Precio para construir un hotel
     private float precioPiscina; //Precio para construir una piscina
@@ -129,27 +130,29 @@ public class Casilla {
             }
         }
         else if (tipo.equalsIgnoreCase("Solar") || tipo.equalsIgnoreCase("Transporte") || tipo.equalsIgnoreCase("Servicio")) {
+            // Si la casilla está hipotecada NO se cobra alquiler
+            if (hipotecada) {
+                return true; // no hay pago, pero el jugador sigue siendo solvente
+            }
+
             if (duenho != null && duenho != banca && duenho != actual) {
                 float alquiler;
                 if (tipo.equalsIgnoreCase("Servicio")) {
-                    // Parte 1: 4 * tirada * 50.000
                     alquiler = tirada * 4 * 50000f;
                 } else if (tipo.equalsIgnoreCase("Transporte")) {
-                    // Parte 1: 250.000 fijos
                     alquiler = 250000f;
                 } else {
-                    // Solar: calcular alquiler teniendo en cuenta edificios. Si existe monopolio
-                    // y NO hay edificios, el alquiler se dobla (regla de la Parte 1).
                     int n = numeroSolar();
                     alquiler = alquilerTotal(n);
                     int totalEd = numCasas + numHoteles + numPiscinas + numPistas;
-                     if (grupo != null && grupo.esDuenhoGrupo(duenho) && totalEd == 0) {
+                    if (grupo != null && grupo.esDuenhoGrupo(duenho) && totalEd == 0) {
                         alquiler *= 2f;
                     }
                 }
                 return actual.pagar(alquiler, duenho);
             }
         }
+
         // Suerte/Comunidad/Cárcel/Salida: sin efecto aquí en Parte 1
         return true; // Por defecto, siempre solvente
     }
@@ -236,9 +239,22 @@ public class Casilla {
             return;
         }
 
+         // no se puede edificar en una casilla hipotecada
+        if (this.hipotecada) {
+            System.out.println("No se puede edificar en " + nombre + " porque está hipotecada.");
+            return;
+        }
+
+
         // Validar monopolio del grupo si procede (no se permite edificar si no se posee todo el grupo)
         if (this.grupo != null && !this.grupo.esDuenhoGrupo(jugador)) {
             System.out.println("No se puede edificar en " + nombre + ", porque no se posee el monopolio del grupo " + nombreGrupo() + ".");
+            return;
+        }
+
+        // ⬇️ NUEVO: no se puede edificar si en el grupo hay alguna casilla hipotecada
+        if (this.grupo != null && this.grupo.hayHipotecasEnGrupo()) {
+            System.out.println("No se puede edificar en el grupo " + nombreGrupo() + " porque hay propiedades hipotecadas en él.");
             return;
         }
 
@@ -350,6 +366,13 @@ public class Casilla {
     public int getNumHoteles() { return numHoteles; }
     public int getNumPiscinas() { return numPiscinas; }
     public int getNumPistas() { return numPistas; }
+    public boolean getHipotecada() { return hipotecada; }
+
+
+    public void setHipotecada(boolean hipotecada) { 
+        this.hipotecada = hipotecada; 
+    }
+
 
 
     // Determina el número de Solar (SolarX -> X), o -1 si no es solar
