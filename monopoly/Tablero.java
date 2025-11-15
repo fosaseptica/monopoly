@@ -183,7 +183,7 @@ public class Tablero {
             }
         }
 
-        // Recortar a 9 y padear a 9 para el dibujo
+        // Recortar a 12 y padear a 12 para el dibujo
         if (texto.length() >12 ) texto = texto.substring(0, 12);
         String padded = String.format("%-12s", texto);
 
