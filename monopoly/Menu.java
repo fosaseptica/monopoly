@@ -25,11 +25,13 @@ public class Menu {
     // --- Cartas Suerte / Caja de Comunidad ---
     private int sigCartaSuerte = 1;
     private int sigCartaCaja   = 1;
-    private static final int NUM_CARTAS_SUERTE = 7; // según apéndice A
+    private static final int NUM_CARTAS_SUERTE = 7;
     private static final int NUM_CARTAS_CAJA   = 6;
 
     // === Campos internos auxiliares (no alteran el esqueleto) ===
     private Scanner sc; //Para leer comandos de consola
+    // Bandera global para activar o desactivar mensajes de depuración en puntos críticos (es útil a la hora de )
+    public static boolean DEBUG = true;
 
     // ------------------------- Constructor -------------------------
     public Menu() {
@@ -98,9 +100,9 @@ public class Menu {
                     listarVenta();
                 } else if (partes.length >= 2 && partes[1].equalsIgnoreCase("edificios")) {
                     if (partes.length >= 3) {
-                        listarEdificiosPorGrupo(partes[2]);
+                        listarEdificiosPorGrupo(partes[2]); //Se llama a listar edificios por grupo
                     } else {
-                        listarEdificios();
+                        listarEdificios(); //Se llama a listar todos los edificios
                     }
                 } else {
                     System.out.println("Uso: listar jugadores | listar avatares | listar enventa");
@@ -312,6 +314,7 @@ public class Menu {
 
     
     private void lanzarDados(int d1, int d2) {
+        //Si no hay jugadores, no se pueden lanzar dados
         if (jugadores.isEmpty()) {
             System.out.println("No hay jugadores en la partida.");
             return;
@@ -319,23 +322,23 @@ public class Menu {
 
         Jugador actual = jugadores.get(turno);
         // Si el jugador está en la cárcel, sólo puede salir si saca dobles.
-        // Generamos tirada si no se pasó explícitamente (d1<0 || d2<0) — comportamiento igual que fuera de la cárcel.
         if (actual.isEnCarcel()) {
-            if (d1 < 0 || d2 < 0) {
+            if (d1 < 0 || d2 < 0) { //Si los valore d1 y d2 no se pasan (dados forzados), se generan aleatoriamente
                 d1 = dado1.hacerTirada();
                 d2 = dado2.hacerTirada();
             }
             int totalJ = d1 + d2;
+            //Se imprime iformación de la tirada en cárcel
             System.out.println("{");
             System.out.println("Dados: " + d1 + " + " + d2 + " = " + totalJ);
             System.out.println("Jugador: " + actual.getNombre());
             System.out.println("Avatar: " + actual.getAvatar().getId() + " (en cárcel)");
             System.out.println("}");
             if (d1 != d2) {
-                // No sale de la cárcel
+                //Si los dados no son dobles no sale de la cárcel
                 actual.setTiradasCarcel(actual.getTiradasCarcel() + 1);
                 System.out.println(actual.getNombre() + " no ha sacado dobles. Sigue en la cárcel.");
-                tirado = true; // su turno termina respecto a tirar dados
+                tirado = true; // su turno termina (no puede tirar más)
                 verTablero();
                 return;
             } else {
@@ -346,6 +349,8 @@ public class Menu {
             }
         }
         
+        //A PARTIR DE AQUÍ, EL JUGADOR NO ESTÁ EN LA CÁRCEL 
+
         // Bloquea si ya tiró y no hay dobles pendientes
         if (tirado) {
             System.out.println("Ya has tirado en este turno. Debes acabar el turno o esperar a un doble.");
@@ -362,9 +367,9 @@ public class Menu {
 
         // ---- Control de dobles ----
         if (d1 == d2) {
-            lanzamientos++;
+            lanzamientos++; //Incrementar contador de lanzamientos por dobles
         } else {
-            lanzamientos = 0;
+            lanzamientos = 0; //Resetear contador de lanzamientos si no son dobles
         }
 
         // ---- Tres dobles consecutivos ----
@@ -383,18 +388,22 @@ public class Menu {
         }
 
         // ---- Movimiento normal ----
+        //Se imprime información de la tirada y movimiento
         System.out.println("{");
         System.out.println("Dados: " + d1 + " + " + d2 + " = " + total);
         System.out.println("Jugador: " + actual.getNombre());
         System.out.println("Avatar: " + actual.getAvatar().getId() + " avanza " + total + " posiciones");
         System.out.println("}");
 
+        //Calcula si pasa por salida
         int posAnteriorIdx = actual.getAvatar().getLugar().getPosicion();
         boolean pasaPorSalida = (posAnteriorIdx + total) >= 40;
 
+        //Mueve el avatar por el tablero
         actual.getAvatar().moverAvatar(tablero.getCasillas(), total);
         Casilla nueva = actual.getAvatar().getLugar();
 
+        // Si pasa por salida, cobra 2000000€
         if (pasaPorSalida && !nueva.getNombre().equalsIgnoreCase("IrACárcel")) {
             actual.sumarFortuna(2000000f);
             // registrar estadísticas: paso por salida y vueltas
@@ -404,14 +413,17 @@ public class Menu {
         // registrar visita a la casilla en el tablero
         tablero.registrarVisita(nueva.getNombre());
 
+        //Mensaje de la nueva casilla
         System.out.println("Ahora estás en: " + nueva.getNombre());
 
         String tipoCasilla = nueva.getTipo();
-        if (tipoCasilla.equalsIgnoreCase("Suerte")) {
+        // Evaluar efectos de la casilla
+        if (tipoCasilla.equalsIgnoreCase("Suerte")) { // Carta de Suerte
             aplicarCartaSuerte(actual);
-        } else if (tipoCasilla.equalsIgnoreCase("Comunidad")) {
+        } else if (tipoCasilla.equalsIgnoreCase("Comunidad")) { // Carta de Comunidad
             aplicarCartaCaja(actual);
         } else {
+            // Evaluar casilla normal
             solvente = nueva.evaluarCasilla(actual, banca, total, tablero);
             if (!solvente) System.out.println("No puedes pagar, ¡bancarrota!");
         }
@@ -489,6 +501,7 @@ public class Menu {
         }
     }
 
+    //Este método mueve al jugador directamente a una casilla sin pasar por salida (no cobra)
     private void moverDirectoSinSalida(Jugador jugador, Casilla destino) {
         if (destino == null) return;
     
