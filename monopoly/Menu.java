@@ -318,6 +318,33 @@ public class Menu {
         }
 
         Jugador actual = jugadores.get(turno);
+        // Si el jugador está en la cárcel, sólo puede salir si saca dobles.
+        // Generamos tirada si no se pasó explícitamente (d1<0 || d2<0) — comportamiento igual que fuera de la cárcel.
+        if (actual.isEnCarcel()) {
+            if (d1 < 0 || d2 < 0) {
+                d1 = dado1.hacerTirada();
+                d2 = dado2.hacerTirada();
+            }
+            int totalJ = d1 + d2;
+            System.out.println("{");
+            System.out.println("Dados: " + d1 + " + " + d2 + " = " + totalJ);
+            System.out.println("Jugador: " + actual.getNombre());
+            System.out.println("Avatar: " + actual.getAvatar().getId() + " (en cárcel)");
+            System.out.println("}");
+            if (d1 != d2) {
+                // No sale de la cárcel
+                actual.setTiradasCarcel(actual.getTiradasCarcel() + 1);
+                System.out.println(actual.getNombre() + " no ha sacado dobles. Sigue en la cárcel.");
+                tirado = true; // su turno termina respecto a tirar dados
+                verTablero();
+                return;
+            } else {
+                // Sale de la cárcel y continúa con la tirada (dobles)
+                actual.setEnCarcel(false);
+                System.out.println(actual.getNombre() + " ha sacado dobles y sale de la cárcel.");
+                // dejamos que el flujo normal (incremento de lanzamientos, movimiento, etc.) continúe
+            }
+        }
         
         // Bloquea si ya tiró y no hay dobles pendientes
         if (tirado) {
@@ -547,6 +574,10 @@ public class Menu {
                 System.out.println("Acción: Los acreedores te persiguen por impago. Ve a la Cárcel. "
                         + "Ve directamente sin pasar por la casilla de Salida y sin cobrar los 2000000€.");
                 jugador.encarcelar(tablero.getCasillas());
+                // Si una carta manda al jugador a la cárcel, anulamos cualquier tirada extra pendiente
+                // y reiniciamos el contador de dobles para evitar que pueda tirar inmediatamente.
+                this.lanzamientos = 0;
+                this.tirado = true;
                 break;
     
             case 3:
@@ -582,7 +613,7 @@ public class Menu {
                 if (transporte != null) {
                     moverDirectoSinSalida(jugador, transporte); // no se menciona cobrar por Salida aquí
                     Jugador dueno = transporte.getDuenho();
-                    if (dueno != null && dueno != banca && dueno != jugador && !transporte.isHipotecada()) {
+                    if (dueno != null && dueno != banca && dueno != jugador && !transporte.getHipotecada()) {
                         float alquilerBase = 250000f; // tu alquiler fijo para transportes
                         cobrarConHipoteca(jugador, 2 * alquilerBase, dueno);
                     } else if (dueno == banca) {
@@ -610,6 +641,9 @@ public class Menu {
                 System.out.println("Acción: Te investigan por fraude de identidad. "
                         + "Vas a la Cárcel sin pasar por la casilla de Salida y sin cobrar los 2000000€.");
                 jugador.encarcelar(tablero.getCasillas());
+                // Igual que en Suerte: impedir tirada extra tras ser enviado a la cárcel por carta
+                this.lanzamientos = 0;
+                this.tirado = true;
                 break;
     
             case 3:
@@ -1297,6 +1331,26 @@ public class Menu {
             return;
         }
         Jugador actual = jugadores.get(turno);
+        // Si el jugador está en la cárcel, sólo puede salir con dobles.
+        if (actual.isEnCarcel()) {
+            int totalJ = d1 + d2;
+            System.out.println("{");
+            System.out.println("Dados: " + d1 + " + " + d2 + " = " + totalJ);
+            System.out.println("Jugador: " + actual.getNombre());
+            System.out.println("Avatar: " + actual.getAvatar().getId() + " (en cárcel)");
+            System.out.println("}");
+            if (d1 != d2) {
+                actual.setTiradasCarcel(actual.getTiradasCarcel() + 1);
+                System.out.println(actual.getNombre() + " no ha sacado dobles. Sigue en la cárcel.");
+                tirado = true;
+                verTablero();
+                return;
+            } else {
+                actual.setEnCarcel(false);
+                System.out.println(actual.getNombre() + " ha sacado dobles y sale de la cárcel.");
+                // continuar con la tirada (dobles)
+            }
+        }
         int total = d1 + d2;
         System.out.println("{");
         System.out.println("Dados: " + d1 + " + " + d2 + " = " + total);
