@@ -108,32 +108,42 @@ public class Casilla {
     * Valor devuelto: true en caso de ser solvente (es decir, de cumplir las deudas), y false
     * en caso de no cumplirlas.*/
     public boolean evaluarCasilla(Jugador actual, Jugador banca, int tirada, Tablero tablero) {
+        // Depuración: traza básica de la evaluación de la casilla
+        if (Menu.DEBUG) {
+            System.out.println("[DEBUG] evaluarCasilla -> casilla='" + nombre + "' tipo='" + tipo + "' jugador='" + (actual != null ? actual.getNombre() : "-") + "' tirada=" + tirada + " hipotecada=" + hipotecada + " duenho='" + (duenho != null ? duenho.getNombre() : "banca") + "'");
+        }
         // Especiales directas
         if (nombre.equalsIgnoreCase("IrACárcel")) {
+            if (Menu.DEBUG) System.out.println("[DEBUG] Acción: enviar a la cárcel -> " + actual.getNombre());
             actual.encarcelar(tablero.getCasillas());
             return true;
         }
         if (nombre.equalsIgnoreCase("Parking")) {
             float bote = tablero.cobrarBote();
+            if (Menu.DEBUG) System.out.println("[DEBUG] Parking: bote=" + bote + " -> abonando a " + actual.getNombre());
             actual.sumarFortuna(bote); // El jugador cobra el bote
             return true;
         }
 
         if (tipo.equalsIgnoreCase("Impuesto")) {
             // Parte 1: el pago va al Parking (bote), no a la banca
+            if (Menu.DEBUG) System.out.println("[DEBUG] Impuesto: cantidad=" + impuesto + " fortunaJugador=" + actual.getFortuna());
             if (actual.getFortuna() >= impuesto) {
                 actual.sumarFortuna(-impuesto);
                 tablero.anadirAlBote(impuesto);
                 // registrar pago de impuestos en estadísticas del jugador
                 actual.registrarPagoTasa(impuesto);
+                if (Menu.DEBUG) System.out.println("[DEBUG] Impuesto pagado por " + actual.getNombre());
                 return true;
             } else {
+                if (Menu.DEBUG) System.out.println("[DEBUG] Impuesto NO pagado por " + actual.getNombre());
                 return false;
             }
         }
         else if (tipo.equalsIgnoreCase("Solar") || tipo.equalsIgnoreCase("Transporte") || tipo.equalsIgnoreCase("Servicio")) {
             // Si la casilla está hipotecada NO se cobra alquiler
             if (hipotecada) {
+                if (Menu.DEBUG) System.out.println("[DEBUG] Casilla hipotecada -> no se cobra alquiler.");
                 return true; // no hay pago, pero el jugador sigue siendo solvente
             }
 
@@ -151,6 +161,7 @@ public class Casilla {
                         alquiler *= 2f;
                     }
                 }
+                if (Menu.DEBUG) System.out.println("[DEBUG] Alquiler calculado para " + actual.getNombre() + " -> " + alquiler + " (dueño=" + (duenho!=null?duenho.getNombre():"-") + ")");
                 boolean ok = actual.pagar(alquiler, duenho);
                 if (ok) {
                     // registrar estadísticas de pago/cobro de alquiler
@@ -158,6 +169,9 @@ public class Casilla {
                     if (duenho != null) duenho.registrarCobroAlquiler(alquiler);
                     // registrar ingreso global por casilla
                     if (tablero != null) tablero.registrarIngresoPorCasilla(this.getNombre(), alquiler);
+                    if (Menu.DEBUG) System.out.println("[DEBUG] Alquiler pagado correctamente por " + actual.getNombre());
+                } else {
+                    if (Menu.DEBUG) System.out.println("[DEBUG] Alquiler NO pagado por " + actual.getNombre());
                 }
                 return ok;
             }
@@ -171,12 +185,16 @@ public class Casilla {
     * - Jugador que solicita la compra de la casilla.
     * - Banca del monopoly (es el dueño de las casillas no compradas aún).*/
     public void comprarCasilla(Jugador solicitante, Jugador banca) {
+        if (Menu.DEBUG) System.out.println("[DEBUG] comprarCasilla -> solicitante=" + (solicitante!=null?solicitante.getNombre():"-") + " casilla=" + nombre + " precio=" + valor + " fortuna=" + (solicitante!=null?solicitante.getFortuna():0));
         if (this.duenho == banca && solicitante.getFortuna() >= valor) {
             solicitante.pagar(valor, banca);
             this.duenho = solicitante;
             solicitante.anhadirPropiedad(this);
             // registrar inversión del jugador
             solicitante.registrarCompra(valor);
+            if (Menu.DEBUG) System.out.println("[DEBUG] comprarCasilla -> compra realizada por " + solicitante.getNombre());
+        } else {
+            if (Menu.DEBUG) System.out.println("[DEBUG] comprarCasilla -> compra NO realizada (ya tiene dueño o fortuna insuficiente)");
         }
     }
 
@@ -354,9 +372,11 @@ public class Casilla {
             System.out.println("Se ha edificado una " + tipoEdificio + " en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
         } else {
             // Registrar el edificio en el registro global (Tablero) y en el jugador
+            if (Menu.DEBUG) System.out.println("[DEBUG] edificar -> jugador=" + jugador.getNombre() + " tipo=" + tipoEdificio + " coste=" + coste + " id=" + idEdificio + " fortunaAntes=" + jugador.getFortuna());
             monopoly.Tablero.registrarEdificioStatic(idEdificio, tipoEdificio, jugador.getNombre(), nombre, nombreGrupo(), coste);
             jugador.anhadirEdificio(idEdificio);
             System.out.println("Se ha edificado una " + tipoEdificio + " (id: " + idEdificio + ") en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
+            if (Menu.DEBUG) System.out.println("[DEBUG] edificar -> completado. fortunaDespues=" + jugador.getFortuna());
         }
 }
 
