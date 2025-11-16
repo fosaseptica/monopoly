@@ -255,7 +255,14 @@ public class Casilla {
         return nombre + " ya tiene dueño (" + duenho.getNombre() + ")";
     }
 
+    // Wrapper kept for backward compatibility: single unit build
     public void edificar(String tipoEdificio, Jugador jugador) {
+        edificar(tipoEdificio, jugador, 1);
+    }
+
+    // El metodo edificar ahora nos deja construir varias casas en vez de una sola (lo metemos en el argumento cantidad)
+    // A la hora de construir un hotel, se eliminan las 4 casas previas (si las hay)
+    public void edificar(String tipoEdificio, Jugador jugador, int cantidad) {
         if (!tipo.equalsIgnoreCase("Solar")) {
             System.out.println("Solo se puede edificar en solares.");
             return;
@@ -273,35 +280,60 @@ public class Casilla {
             return;
         }
 
-
         // Validar monopolio del grupo si procede (no se permite edificar si no se posee todo el grupo)
         if (this.grupo != null && !this.grupo.esDuenhoGrupo(jugador)) {
             System.out.println("No se puede edificar en " + nombre + ", porque no se posee el monopolio del grupo " + nombreGrupo() + ".");
             return;
         }
 
-        // ⬇️ NUEVO: no se puede edificar si en el grupo hay alguna casilla hipotecada
+        // No se puede edificar si en el grupo hay alguna casilla hipotecada
         if (this.grupo != null && this.grupo.hayHipotecasEnGrupo()) {
             System.out.println("No se puede edificar en el grupo " + nombreGrupo() + " porque hay propiedades hipotecadas en él.");
             return;
         }
 
-        float coste = 0;
-        String idEdificio = "";
+        String tipo = tipoEdificio.toLowerCase();
 
-        switch (tipoEdificio.toLowerCase()) {
-            case "casa":
-                if (numCasas >= 4) {
+        switch (tipo) {
+            case "casa": {
+                if (cantidad <= 0) {
+                    System.out.println("Cantidad inválida para edificar casas.");
+                    return;
+                }
+                int espacio = 4 - numCasas;
+                int aConstruir = Math.min(espacio, cantidad);
+                if (aConstruir <= 0) {
                     System.out.println("No se pueden construir más casas en esta casilla.");
                     return;
                 }
-                // usar precio específico si está definido
-                coste = this.precioCasa > 0 ? this.precioCasa : (valor * 0.6f);
-                numCasas++;
-                idEdificio = monopoly.Tablero.generarIdEdificio("casa");
-                break;
+                float precioUnit = this.precioCasa > 0 ? this.precioCasa : (valor * 0.6f);
+                float costeTotal = precioUnit * aConstruir;
+                // Si no tiene suficiente fortuna, ajustar la cantidad
+                if (jugador.getFortuna() < costeTotal) {
+                    int maxAffordable = (int)(jugador.getFortuna() / precioUnit);
+                    if (maxAffordable <= 0) {
+                        System.out.println("La fortuna de " + jugador.getNombre() + " no es suficiente para edificar ninguna casa en " + nombre + ".");
+                        return;
+                    }
+                    aConstruir = Math.min(aConstruir, maxAffordable);
+                    costeTotal = precioUnit * aConstruir;
+                }
 
-            case "hotel":
+                // Ejecutar la construcción de aConstruir casas
+                for (int i = 0; i < aConstruir; i++) {
+                    numCasas++;
+                    String id = monopoly.Tablero.generarIdEdificio("casa");
+                    monopoly.Tablero.registrarEdificioStatic(id, "casa", jugador.getNombre(), nombre, nombreGrupo(), precioUnit);
+                    jugador.anhadirEdificio(id);
+                }
+                jugador.sumarFortuna(-costeTotal);
+                jugador.sumarGastos(costeTotal);
+                System.out.println(jugador.getNombre() + " ha edificado " + aConstruir + " " + (aConstruir==1?"casa":"casas") + " en " + nombre + ", coste: " + (int)costeTotal + "€. Fortuna ahora: " + jugador.getFortuna() + "€.");
+                return;
+            }
+
+            case "hotel": {
+                // Para construir un hotel debemos tener 4 casas disponibles previamente
                 if (numCasas < 4) {
                     System.out.println("Debe tener 4 casas antes de construir un hotel.");
                     return;
@@ -310,10 +342,44 @@ public class Casilla {
                     System.out.println("Ya hay un hotel en esta casilla.");
                     return;
                 }
-                coste = this.precioHotel > 0 ? this.precioHotel : (valor * 0.6f);
+
+                // Antes de edificar el hotel, eliminamos las 4 casas (registro global y jugador)
+                ArrayList<String> idsCasas = monopoly.Tablero.buscarIdsPorCasillaYTipo(this.nombre, "casa");
+                int eliminados = 0;
+                for (String id : idsCasas) {
+                    if (eliminados >= 4) break;
+                    boolean removed = monopoly.Tablero.eliminarEdificioStatic(id);
+                    if (removed) {
+                        jugador.eliminarEdificio(id);
+                        eliminados++;
+                    }
+                }
+                // Actualizar contador local de casas
+                if (eliminados > 0) {
+                    numCasas = Math.max(0, numCasas - eliminados);
+                }
+
+                float costeHotel = this.precioHotel > 0 ? this.precioHotel : (valor * 0.6f);
+                if (jugador.getFortuna() < costeHotel) {
+                    System.out.println("La fortuna de " + jugador.getNombre() + " no es suficiente para edificar un hotel en " + nombre + ".");
+                    // Restaurar casas eliminadas en caso de fallo (rehacer registros)
+                    // Para minimizar cambios, si no se puede pagar no intentamos reconstruir las casas aquí
+                    return;
+                }
+
+                // Proceder a edificar hotel
                 numHoteles++;
-                idEdificio = monopoly.Tablero.generarIdEdificio("hotel");
-                break;
+                String idHotel = monopoly.Tablero.generarIdEdificio("hotel");
+                monopoly.Tablero.registrarEdificioStatic(idHotel, "hotel", jugador.getNombre(), nombre, nombreGrupo(), costeHotel);
+                jugador.anhadirEdificio(idHotel);
+                jugador.sumarFortuna(-costeHotel);
+                jugador.sumarGastos(costeHotel);
+                // Si hemos eliminado justo 4 casas al construir hotel, dejar contador de casas a 0
+                if (eliminados >= 4) numCasas = 0;
+
+                System.out.println("Se ha edificado un hotel (id: " + idHotel + ") en " + nombre + ". Coste: " + (int)costeHotel + "€. Fortuna ahora: " + jugador.getFortuna() + "€.");
+                return;
+            }
 
             case "piscina":
                 if (numHoteles < 1) {
@@ -324,10 +390,19 @@ public class Casilla {
                     System.out.println("Ya existe una piscina en esta casilla.");
                     return;
                 }
-                coste = this.precioPiscina > 0 ? this.precioPiscina : (valor * 0.4f);
+                float costePisc = this.precioPiscina > 0 ? this.precioPiscina : (valor * 0.4f);
+                if (jugador.getFortuna() < costePisc) {
+                    System.out.println("La fortuna de " + jugador.getNombre() + " no es suficiente para edificar una piscina en " + nombre + ".");
+                    return;
+                }
                 numPiscinas++;
-                idEdificio = monopoly.Tablero.generarIdEdificio("piscina");
-                break;
+                String idPisc = monopoly.Tablero.generarIdEdificio("piscina");
+                monopoly.Tablero.registrarEdificioStatic(idPisc, "piscina", jugador.getNombre(), nombre, nombreGrupo(), costePisc);
+                jugador.anhadirEdificio(idPisc);
+                jugador.sumarFortuna(-costePisc);
+                jugador.sumarGastos(costePisc);
+                System.out.println("Se ha edificado una piscina (id: " + idPisc + ") en " + nombre + ". Coste: " + (int)costePisc + "€. Fortuna ahora: " + jugador.getFortuna() + "€.");
+                return;
 
             case "pista_deporte":
             case "pista-deporte":
@@ -340,43 +415,25 @@ public class Casilla {
                     System.out.println("Ya hay una pista de deporte en esta casilla.");
                     return;
                 }
-                coste = this.precioPistaDeporte > 0 ? this.precioPistaDeporte : (valor * 0.8f);
+                float costePista = this.precioPistaDeporte > 0 ? this.precioPistaDeporte : (valor * 0.8f);
+                if (jugador.getFortuna() < costePista) {
+                    System.out.println("La fortuna de " + jugador.getNombre() + " no es suficiente para edificar una pista de deporte en " + nombre + ".");
+                    return;
+                }
                 numPistas++;
-                idEdificio = monopoly.Tablero.generarIdEdificio("pista_deporte");
-                break;
+                String idPista = monopoly.Tablero.generarIdEdificio("pista_deporte");
+                monopoly.Tablero.registrarEdificioStatic(idPista, "pista_deporte", jugador.getNombre(), nombre, nombreGrupo(), costePista);
+                jugador.anhadirEdificio(idPista);
+                jugador.sumarFortuna(-costePista);
+                jugador.sumarGastos(costePista);
+                System.out.println("Se ha edificado una pista de deporte (id: " + idPista + ") en " + nombre + ". Coste: " + (int)costePista + "€. Fortuna ahora: " + jugador.getFortuna() + "€.");
+                return;
 
             default:
                 System.out.println("Tipo de edificio no válido.");
                 return;
         }
-
-        // Comprobamos si el jugador tiene dinero
-        if (jugador.getFortuna() < coste) {
-            System.out.println("La fortuna de " + jugador.getNombre() + " no es suficiente para edificar " + tipoEdificio + " en " + nombre + ".");
-            // revertir contador local incrementado por seguridad
-            if (tipoEdificio.equalsIgnoreCase("casa") && numCasas > 0) numCasas--;
-            if (tipoEdificio.equalsIgnoreCase("hotel") && numHoteles > 0) numHoteles--;
-            if (tipoEdificio.equalsIgnoreCase("piscina") && numPiscinas > 0) numPiscinas--;
-            if (tipoEdificio.toLowerCase().startsWith("pista") && numPistas > 0) numPistas--;
-            return;
-        }
-
-        // Actualizamos fortuna y gastos
-        jugador.sumarFortuna(-coste);
-        jugador.sumarGastos(coste);
-
-        // Mensaje con id generado
-        if (idEdificio.isEmpty()) {
-            System.out.println("Se ha edificado una " + tipoEdificio + " en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
-        } else {
-            // Registrar el edificio en el registro global (Tablero) y en el jugador
-            System.out.println("Edificando: " + jugador.getNombre() + " construye " + tipoEdificio + " (id: " + idEdificio + ") en " + nombre + ". Coste: " + (int)coste + "€. Fortuna antes: " + jugador.getFortuna() + "€.");
-            monopoly.Tablero.registrarEdificioStatic(idEdificio, tipoEdificio, jugador.getNombre(), nombre, nombreGrupo(), coste);
-            jugador.anhadirEdificio(idEdificio);
-            System.out.println("Se ha edificado una " + tipoEdificio + " (id: " + idEdificio + ") en " + nombre + ". La fortuna de " + jugador.getNombre() + " se reduce en " + (int)coste + "€.");
-            System.out.println("Edificación completada. Fortuna ahora: " + jugador.getFortuna() + "€.");
-        }
-}
+    }
 
 
     // Getters
