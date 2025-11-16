@@ -193,26 +193,43 @@ public class Menu {
                 break;
 
             case "edificar":
-                // Uso: edificar <tipo>
+                // Uso: edificar <tipo> <cantidad>
                 if (partes.length >= 2) {
-                    if (jugadores.isEmpty()) {
+                    if (jugadores.isEmpty()) { 
                         System.out.println("No hay jugadores en la partida.");
                         break;
                     }
                     Jugador actualEd = jugadores.get(turno);
                     Casilla donde = actualEd.getAvatar().getLugar();
                     String tipoEd = partes[1];
-                    // Permitir tipos con guion bajo o espacio: "pista_deporte" o "pista deporte"
+                    int cantidad = 1; // por defecto, una unidad
+                    // Si hay más tokens, comprobar si el último token es un número (cantidad)
                     if (partes.length >= 3) {
+                        String ultimo = partes[partes.length - 1];
+                        boolean ultimoEsNumero = false;
+                        try {
+                            Integer.parseInt(ultimo);
+                            ultimoEsNumero = true;
+                        } catch (NumberFormatException e) {
+                            ultimoEsNumero = false;
+                        }
+                        int endIdx = ultimoEsNumero ? partes.length - 1 : partes.length;
                         // juntar resto de partes por si el tipo tiene espacios
                         StringBuilder sb = new StringBuilder(tipoEd);
-                        for (int i = 2; i < partes.length; i++) {
+                        for (int i = 2; i < endIdx; i++) {
                             sb.append("_").append(partes[i]);
                         }
                         tipoEd = sb.toString();
+                        if (ultimoEsNumero) {
+                            try {
+                                cantidad = Integer.parseInt(ultimo);
+                            } catch (NumberFormatException e) {
+                                cantidad = 1;
+                            }
+                        }
                     }
-                    // Llamamos al método existente en Casilla
-                    donde.edificar(tipoEd, actualEd);
+                    // Llamamos al método existente en Casilla (sobrecarga que acepta cantidad)
+                    donde.edificar(tipoEd, actualEd, cantidad);
                 } else {
                     System.out.println("Uso: edificar <casa|hotel|piscina|pista_deporte>");
                 }
@@ -626,7 +643,8 @@ public class Menu {
                     Jugador dueno = transporte.getDuenho();
                     if (dueno != null && dueno != banca && dueno != jugador && !transporte.getHipotecada()) {
                         float alquilerBase = 250000f; // tu alquiler fijo para transportes
-                        cobrarConHipoteca(jugador, 2 * alquilerBase, dueno);
+                        // Se paga el doble del alquiler
+                        cobrarConHipoteca(jugador, alquilerBase, dueno);
                     } else if (dueno == banca) {
                         System.out.println("La casilla no tiene dueño. Puedes comprarla con el comando 'comprar "
                                 + transporte.getNombre() + "'.");
