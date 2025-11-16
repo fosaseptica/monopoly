@@ -30,8 +30,6 @@ public class Menu {
 
     // === Campos internos auxiliares (no alteran el esqueleto) ===
     private Scanner sc; //Para leer comandos de consola
-    // Bandera global para activar o desactivar mensajes de depuración en puntos críticos (es útil a la hora de )
-    public static boolean DEBUG = true;
 
     // ------------------------- Constructor -------------------------
     public Menu() {
