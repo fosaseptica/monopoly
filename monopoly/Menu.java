@@ -22,6 +22,12 @@ public class Menu {
     private boolean tirado; //Booleano para comprobar si el jugador que tiene el turno ha tirado o no.
     private boolean solvente; //Booleano para comprobar si el jugador que tiene el turno es solvente, es decir, si ha pagado sus deudas.
 
+    // --- Cartas Suerte / Caja de Comunidad ---
+    private int sigCartaSuerte = 1;
+    private int sigCartaCaja   = 1;
+    private static final int NUM_CARTAS_SUERTE = 7; // según apéndice A
+    private static final int NUM_CARTAS_CAJA   = 6;
+
     // === Campos internos auxiliares (no alteran el esqueleto) ===
     private Scanner sc; //Para leer comandos de consola
 
@@ -372,8 +378,16 @@ public class Menu {
         tablero.registrarVisita(nueva.getNombre());
 
         System.out.println("Ahora estás en: " + nueva.getNombre());
-        solvente = nueva.evaluarCasilla(actual, banca, total, tablero);
-        if (!solvente) System.out.println("No puedes pagar, ¡bancarrota!");
+
+        String tipoCasilla = nueva.getTipo();
+        if (tipoCasilla.equalsIgnoreCase("Suerte")) {
+            aplicarCartaSuerte(actual);
+        } else if (tipoCasilla.equalsIgnoreCase("Comunidad")) {
+            aplicarCartaCaja(actual);
+        } else {
+            solvente = nueva.evaluarCasilla(actual, banca, total, tablero);
+            if (!solvente) System.out.println("No puedes pagar, ¡bancarrota!");
+        }
 
         // ---- Dobles para tirar de nuevo ----
         if (d1 == d2) {
@@ -435,6 +449,202 @@ public class Menu {
         } else {
             System.out.println("No tienes suficiente dinero para comprar " + c.getNombre() + ".");
         }
+    }
+
+    // Intenta cobrar "cantidad" a "pagador". Si no llega, solo avisa de que hipoteque.
+    private boolean cobrarConHipoteca(Jugador pagador, float cantidad, Jugador receptor) {
+        if (pagador.getFortuna() >= cantidad) {
+            return pagador.pagar(cantidad, receptor);
+        } else {
+            System.out.println(pagador.getNombre() + " no tiene suficiente dinero para pagar "
+                    + (int)cantidad + "€. Debe hipotecar alguna propiedad para hacer frente al pago.");
+            return false;
+        }
+    }
+
+    private void moverDirectoSinSalida(Jugador jugador, Casilla destino) {
+        if (destino == null) return;
+    
+        Avatar av = jugador.getAvatar();
+        Casilla origen = av.getLugar();
+        origen.eliminarAvatar(av);
+        destino.anhadirAvatar(av);
+        av.setLugar(destino);
+    
+        System.out.println("Ahora estás en: " + destino.getNombre());
+        solvente = destino.evaluarCasilla(jugador, banca, 0, tablero);
+        if (!solvente) System.out.println("No puedes pagar, ¡bancarrota!");
+    }
+
+    private void moverAdelanteHasta(Jugador jugador, Casilla destino, boolean cobraSiPasaSalida) {
+        if (destino == null) return;
+    
+        Avatar av = jugador.getAvatar();
+        Casilla origen = av.getLugar();
+        int posOrigen  = origen.getPosicion();
+        int posDestino = destino.getPosicion();
+    
+        boolean pasaSalida = false;
+        if (cobraSiPasaSalida && posDestino <= posOrigen) {
+            pasaSalida = true;
+        }
+    
+        origen.eliminarAvatar(av);
+        destino.anhadirAvatar(av);
+        av.setLugar(destino);
+    
+        if (pasaSalida) {
+            jugador.sumarFortuna(2000000f);
+            System.out.println(jugador.getNombre() + " pasa por la casilla de Salida y cobra 2000000€.");
+        }
+    
+        System.out.println("Ahora estás en: " + destino.getNombre());
+        solvente = destino.evaluarCasilla(jugador, banca, 0, tablero);
+        if (!solvente) System.out.println("No puedes pagar, ¡bancarrota!");
+    }
+
+    private void moverDelta(Jugador jugador, int delta) {
+        Avatar av = jugador.getAvatar();
+        Casilla origen = av.getLugar();
+        int posOrigen = origen.getPosicion();
+        int posDestino = ((posOrigen + delta) % 40 + 40) % 40;
+    
+        Casilla destino = tablero.getCasillaPorPosicion(posDestino);
+        if (destino == null) return;
+    
+        origen.eliminarAvatar(av);
+        destino.anhadirAvatar(av);
+        av.setLugar(destino);
+    
+        System.out.println("Ahora estás en: " + destino.getNombre());
+        solvente = destino.evaluarCasilla(jugador, banca, 0, tablero);
+        if (!solvente) System.out.println("No puedes pagar, ¡bancarrota!");
+    }
+
+    private Casilla transporteMasCercanoDesde(Casilla origen) {
+        int pos = origen.getPosicion();
+        for (int i = 1; i < 40; i++) {
+            int p = (pos + i) % 40;
+            Casilla c = tablero.getCasillaPorPosicion(p);
+            if (c != null && c.getTipo().equalsIgnoreCase("Transporte")) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    private void aplicarCartaSuerte(Jugador jugador) {
+        System.out.println(jugador.getNombre() + ", elige una carta: " + sigCartaSuerte + ".");
+    
+        switch (sigCartaSuerte) {
+            case 1:
+                System.out.println("Acción: Decides hacer un viaje de placer. Avanza hasta Solar19. "
+                        + "Si pasas por la casilla de Salida, cobra 2000000€.");
+                moverAdelanteHasta(jugador, tablero.encontrar_casilla("Solar19"), true);
+                break;
+    
+            case 2:
+                System.out.println("Acción: Los acreedores te persiguen por impago. Ve a la Cárcel. "
+                        + "Ve directamente sin pasar por la casilla de Salida y sin cobrar los 2000000€.");
+                jugador.encarcelar(tablero.getCasillas());
+                break;
+    
+            case 3:
+                System.out.println("Acción: ¡Has ganado el bote de la lotería! Recibe 1000000€.");
+                jugador.sumarFortuna(1000000f);
+                break;
+    
+            case 4:
+                System.out.println("Acción: Has sido elegido presidente de la junta directiva. "
+                        + "Pagas a cada jugador 250000€.");
+                for (Jugador j : jugadores) {
+                    if (j != jugador) {
+                        cobrarConHipoteca(jugador, 250000f, j);
+                    }
+                }
+                break;
+    
+            case 5:
+                System.out.println("Acción: ¡Hora punta de tráfico! Retrocedes tres casillas.");
+                moverDelta(jugador, -3);
+                break;
+    
+            case 6:
+                System.out.println("Acción: Te multan por usar el móvil mientras conduces. Paga 150000€.");
+                cobrarConHipoteca(jugador, 150000f, banca);
+                break;
+    
+            case 7:
+                System.out.println("Acción: Avanza hasta la casilla de transporte más cercana. "
+                        + "Si no tiene dueño, puedes comprarla. Si tiene dueño, pagas al dueño el doble del alquiler.");
+                Casilla origen = jugador.getAvatar().getLugar();
+                Casilla transporte = transporteMasCercanoDesde(origen);
+                if (transporte != null) {
+                    moverDirectoSinSalida(jugador, transporte); // no se menciona cobrar por Salida aquí
+                    Jugador dueno = transporte.getDuenho();
+                    if (dueno != null && dueno != banca && dueno != jugador && !transporte.isHipotecada()) {
+                        float alquilerBase = 250000f; // tu alquiler fijo para transportes
+                        cobrarConHipoteca(jugador, 2 * alquilerBase, dueno);
+                    } else if (dueno == banca) {
+                        System.out.println("La casilla no tiene dueño. Puedes comprarla con el comando 'comprar "
+                                + transporte.getNombre() + "'.");
+                    }
+                }
+                break;
+        }
+    
+        sigCartaSuerte++;
+        if (sigCartaSuerte > NUM_CARTAS_SUERTE) sigCartaSuerte = 1;
+    }
+
+    private void aplicarCartaCaja(Jugador jugador) {
+        System.out.println(jugador.getNombre() + ", elige una carta: " + sigCartaCaja + ".");
+    
+        switch (sigCartaCaja) {
+            case 1:
+                System.out.println("Acción: Pagas 500000€ por un fin de semana en un balneario de 5 estrellas.");
+                cobrarConHipoteca(jugador, 500000f, banca);
+                break;
+    
+            case 2:
+                System.out.println("Acción: Te investigan por fraude de identidad. "
+                        + "Vas a la Cárcel sin pasar por la casilla de Salida y sin cobrar los 2000000€.");
+                jugador.encarcelar(tablero.getCasillas());
+                break;
+    
+            case 3:
+                System.out.println("Acción: Te colocas en la casilla de Salida. Cobras 2000000€.");
+                Casilla salida = tablero.encontrar_casilla("Salida");
+                if (salida != null) {
+                    Avatar av = jugador.getAvatar();
+                    Casilla origen = av.getLugar();
+                    origen.eliminarAvatar(av);
+                    salida.anhadirAvatar(av);
+                    av.setLugar(salida);
+                    jugador.sumarFortuna(2000000f);
+                    System.out.println("Ahora estás en: " + salida.getNombre());
+                }
+                break;
+    
+            case 4:
+                System.out.println("Acción: Devolución de Hacienda. Cobras 500000€.");
+                jugador.sumarFortuna(500000f);
+                break;
+    
+            case 5:
+                System.out.println("Acción: Retrocedes hasta Solar1 para comprar antigüedades exóticas.");
+                moverDirectoSinSalida(jugador, tablero.encontrar_casilla("Solar1"));
+                break;
+    
+            case 6:
+                System.out.println("Acción: Vas a Solar20 para disfrutar del San Fermín. "
+                        + "Si pasas por la casilla de Salida, cobras 2000000€.");
+                moverAdelanteHasta(jugador, tablero.encontrar_casilla("Solar20"), true);
+                break;
+        }
+    
+        sigCartaCaja++;
+        if (sigCartaCaja > NUM_CARTAS_CAJA) sigCartaCaja = 1;
     }
 
     //Método que ejecuta todas las acciones relacionadas con el comando 'salir carcel'. 
