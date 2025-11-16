@@ -308,39 +308,30 @@ public class Tablero {
         ArrayList<Casilla> este  = posiciones.get(3);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("┌─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┐\n");
+        sb.append("┌────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┐\n");
         sb.append("│");
         for (Casilla c : norte) sb.append(formatearCasilla(c)).append("│");
         sb.append("\n");
 
         for (int i = 0; i < 9; i++) {
-            sb.append("├─────────┤                                                                                         ├─────────┤\n");
+            sb.append("├────────────────┤                                                                                                                                                        ├────────────────┤\n");
             sb.append("│");
             int idxOeste = oeste.size() - 1 - i;
             sb.append(formatearCasilla(oeste.get(idxOeste)));
             sb.append("│");
-            sb.append("                                                                                         ");
+            sb.append("                                                                                                                                                        ");
             sb.append("│");
             sb.append(formatearCasilla(este.get(i)));
             sb.append("│\n");
         }
 
-        sb.append("├─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┤\n");
+        sb.append("├────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┤\n");
         sb.append("│");
         for (int i = sur.size() - 1; i >= 0; i--) sb.append(formatearCasilla(sur.get(i))).append("│");
         sb.append("\n");
-        sb.append("└─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘\n");
+        sb.append("└────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┘\n");
         return sb.toString();
     }
-
-    public Casilla getCasillaPorPosicion(int pos) {
-        for (ArrayList<Casilla> lado : posiciones) {
-            for (Casilla c : lado) {
-                if (c.getPosicion() == pos) return c;
-            }
-        }
-        return null;
-     }
 
     //Método usado para buscar la casilla con el nombre pasado como argumento:
     public Casilla encontrar_casilla(String nombre){
@@ -354,14 +345,22 @@ public class Tablero {
     private String formatearCasilla(Casilla c) {
         String nombre = c.getNombre();  // p.ej. "Solar12"
         String texto  = nombre;
-
+        
+        /*
         // Añadir avatares si los hay (p.ej. "Solar9 &H")
         if (!c.getAvatares().isEmpty()) {
             StringBuilder s = new StringBuilder(nombre).append(" &");
             for (Avatar a : c.getAvatares()) s.append(a.getId());
             texto = s.toString();
         }
+        */
 
+         // Añadir TODOS los avatares con & antes de cada uno
+        if (!c.getAvatares().isEmpty()) {
+            for (Avatar a : c.getAvatares()) {
+                texto += " &" + a.getId();
+            }
+        }
         // Recortar a 9 y padear a 9 para el dibujo
         if (texto.length() > 9) texto = texto.substring(0, 9);
         String padded = String.format("%-9s", texto);
