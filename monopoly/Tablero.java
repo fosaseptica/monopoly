@@ -332,7 +332,16 @@ public class Tablero {
         sb.append("└─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘\n");
         return sb.toString();
     }
-    
+
+    public Casilla getCasillaPorPosicion(int pos) {
+        for (ArrayList<Casilla> lado : posiciones) {
+            for (Casilla c : lado) {
+                if (c.getPosicion() == pos) return c;
+            }
+        }
+        return null;
+     }
+
     //Método usado para buscar la casilla con el nombre pasado como argumento:
     public Casilla encontrar_casilla(String nombre){
         for (ArrayList<Casilla> lado : posiciones)
